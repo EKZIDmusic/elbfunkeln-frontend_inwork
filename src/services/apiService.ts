@@ -3,7 +3,7 @@
  * Zentrale API-Kommunikation mit http://api.elbfunkeln.de/api
  */
 
-const API_BASE_URL = 'http://api.elbfunkeln.de/api';
+const API_BASE_URL = 'https://api.elbfunkeln.de/api';
 
 // Helper function to get auth token
 const getAuthToken = (): string | null => {
