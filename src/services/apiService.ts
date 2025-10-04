@@ -34,7 +34,7 @@ async function apiCall<T>(
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
   const headers = createHeaders(requireAuth);
-  
+
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -42,14 +42,27 @@ async function apiCall<T>(
       ...options.headers,
     },
   });
-  
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.message || `API Error: ${response.statusText}`);
   }
-  
+
   return response.json();
 }
+
+// Transform functions to convert API data to proper types
+const transformProduct = (product: any): Product => ({
+  ...product,
+  price: Number(product.price),
+  discountPrice: product.discountPrice ? Number(product.discountPrice) : null,
+});
+
+const transformOrderItem = (item: any): OrderItem => ({
+  ...item,
+  price: Number(item.price),
+  product: item.product ? transformProduct(item.product) : item.product,
+});
 
 // ============================================================================
 // AUTHENTICATION
@@ -164,27 +177,43 @@ export interface ProductQueryParams {
 }
 
 export const productsApi = {
-  getAll: (params?: ProductQueryParams) => {
+  getAll: async (params?: ProductQueryParams) => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.categoryId) queryParams.append('categoryId', params.categoryId);
     if (params?.search) queryParams.append('search', params.search);
-    
+
     const queryString = queryParams.toString();
     const endpoint = `/products${queryString ? `?${queryString}` : ''}`;
-    
-    return apiCall<ProductsResponse>(endpoint);
+
+    const response = await apiCall<ProductsResponse>(endpoint);
+    return {
+      ...response,
+      data: response.data.map(transformProduct),
+    };
   },
-  
-  getFeatured: () =>
-    apiCall<ProductsResponse>('/products/featured'),
-  
-  search: (query: string) =>
-    apiCall<ProductsResponse>(`/products/search?q=${encodeURIComponent(query)}`),
-  
-  getById: (id: string) =>
-    apiCall<Product>(`/products/${id}`),
+
+  getFeatured: async () => {
+    const response = await apiCall<ProductsResponse>('/products/featured');
+    return {
+      ...response,
+      data: response.data.map(transformProduct),
+    };
+  },
+
+  search: async (query: string) => {
+    const response = await apiCall<ProductsResponse>(`/products/search?q=${encodeURIComponent(query)}`);
+    return {
+      ...response,
+      data: response.data.map(transformProduct),
+    };
+  },
+
+  getById: async (id: string) => {
+    const product = await apiCall<Product>(`/products/${id}`);
+    return transformProduct(product);
+  },
 };
 
 // ============================================================================
@@ -229,26 +258,44 @@ export interface UpdateCartItemData {
 }
 
 export const cartApi = {
-  get: () =>
-    apiCall<Cart>('/cart', {}, true),
-  
-  addItem: (data: AddToCartData) =>
-    apiCall<CartItem>('/cart/items', {
+  get: async () => {
+    const cart = await apiCall<Cart>('/cart', {}, true);
+    return {
+      ...cart,
+      items: cart.items.map(item => ({
+        ...item,
+        product: transformProduct(item.product),
+      })),
+    };
+  },
+
+  addItem: async (data: AddToCartData) => {
+    const item = await apiCall<CartItem>('/cart/items', {
       method: 'POST',
       body: JSON.stringify(data),
-    }, true),
-  
-  updateItem: (itemId: string, data: UpdateCartItemData) =>
-    apiCall<CartItem>(`/cart/items/${itemId}`, {
+    }, true);
+    return {
+      ...item,
+      product: transformProduct(item.product),
+    };
+  },
+
+  updateItem: async (itemId: string, data: UpdateCartItemData) => {
+    const item = await apiCall<CartItem>(`/cart/items/${itemId}`, {
       method: 'PUT',
       body: JSON.stringify(data),
-    }, true),
-  
+    }, true);
+    return {
+      ...item,
+      product: transformProduct(item.product),
+    };
+  },
+
   removeItem: (itemId: string) =>
     apiCall<{ message: string }>(`/cart/items/${itemId}`, {
       method: 'DELETE',
     }, true),
-  
+
   clear: () =>
     apiCall<{ message: string }>('/cart', {
       method: 'DELETE',
@@ -304,22 +351,42 @@ export interface CreateOrderData {
 }
 
 export const ordersApi = {
-  create: (data: CreateOrderData) =>
-    apiCall<Order>('/orders', {
+  create: async (data: CreateOrderData) => {
+    const order = await apiCall<Order>('/orders', {
       method: 'POST',
       body: JSON.stringify(data),
-    }, true),
-  
-  getAll: () =>
-    apiCall<Order[]>('/orders', {}, true),
-  
-  getById: (id: string) =>
-    apiCall<Order>(`/orders/${id}`, {}, true),
-  
-  cancel: (id: string) =>
-    apiCall<Order>(`/orders/${id}/cancel`, {
+    }, true);
+    return {
+      ...order,
+      items: order.items.map(transformOrderItem),
+    };
+  },
+
+  getAll: async () => {
+    const orders = await apiCall<Order[]>('/orders', {}, true);
+    return orders.map(order => ({
+      ...order,
+      items: order.items.map(transformOrderItem),
+    }));
+  },
+
+  getById: async (id: string) => {
+    const order = await apiCall<Order>(`/orders/${id}`, {}, true);
+    return {
+      ...order,
+      items: order.items.map(transformOrderItem),
+    };
+  },
+
+  cancel: async (id: string) => {
+    const order = await apiCall<Order>(`/orders/${id}/cancel`, {
       method: 'PUT',
-    }, true),
+    }, true);
+    return {
+      ...order,
+      items: order.items.map(transformOrderItem),
+    };
+  },
 };
 
 // ============================================================================
