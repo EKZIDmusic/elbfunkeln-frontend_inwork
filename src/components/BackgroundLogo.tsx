@@ -1,0 +1,1 @@
+// Diese Komponente wurde entfernt - das Logo erscheint nur in der HeroSection

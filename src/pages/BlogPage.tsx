@@ -1,0 +1,1 @@
+// Diese Datei wurde gelöscht - Blog-Funktionalität entfernt

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elbfunkeln Datenbank Migration Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background: #2563eb;
+        }
+        .button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .success {
+            background: #dcfce7;
+            border-color: #16a34a;
+            color: #15803d;
+        }
+        .error {
+            background: #fef2f2;
+            border-color: #dc2626;
+            color: #dc2626;
+        }
+        .loading {
+            opacity: 0.6;
+        }
+        pre {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🗄️ Elbfunkeln Datenbank Migration</h1>
+    <p>Automatisierte Erstellung aller 20 E-Commerce Tabellen in Supabase</p>
+
+    <div class="card">
+        <h2>Migration Status</h2>
+        <div id="status">Status wird geprüft...</div>
+        <button class="button" onclick="checkTables()" id="checkBtn">Status prüfen</button>
+        <button class="button" onclick="runMigration()" id="migrateBtn">Migration starten</button>
+    </div>
+
+    <div class="card">
+        <h2>Migration Ergebnis</h2>
+        <div id="result">Keine Migration ausgeführt</div>
+    </div>
+
+    <div class="card">
+        <h2>Benötigte Tabellen</h2>
+        <div id="tables">
+            <ul>
+                <li>user_profiles - Benutzer-Profile</li>
+                <li>user_addresses - Benutzer-Adressen</li>
+                <li>categories - Produktkategorien</li>
+                <li>products - Produkte</li>
+                <li>product_categories - Produkt-Kategorien-Zuordnung</li>
+                <li>product_images - Produktbilder</li>
+                <li>product_variants - Produktvarianten</li>
+                <li>carts - Warenkörbe</li>
+                <li>cart_items - Warenkorb-Artikel</li>
+                <li>orders - Bestellungen</li>
+                <li>order_items - Bestellartikel</li>
+                <li>discount_codes - Rabattcodes</li>
+                <li>newsletter_subscribers - Newsletter-Abonnenten</li>
+                <li>blog_posts - Blog-Beiträge</li>
+                <li>contact_inquiries - Kontaktanfragen</li>
+                <li>shipping_zones - Versandzonen</li>
+                <li>shipping_rates - Versandkosten</li>
+                <li>analytics_events - Analytics-Events</li>
+                <li>inventory_logs - Lager-Logs</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Diese Werte sollten aus der tatsächlichen App kommen
+        const projectId = 'your-supabase-project-id';
+        const publicAnonKey = 'your-supabase-anon-key';
+
+        async function checkTables() {
+            const btn = document.getElementById('checkBtn');
+            const status = document.getElementById('status');
+            
+            btn.disabled = true;
+            btn.textContent = 'Prüfung läuft...';
+            status.innerHTML = '<div class="loading">Tabellen-Status wird geprüft...</div>';
+
+            try {
+                const response = await fetch(
+                    `https://${projectId}.supabase.co/functions/v1/make-server-0a65d7a9/migrate/check-tables`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${publicAnonKey}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    if (result.tables_exist) {
+                        status.innerHTML = `
+                            <div class="status success">
+                                <strong>✅ Datenbank bereits konfiguriert!</strong><br>
+                                ${result.count} von 19 Tabellen gefunden:<br>
+                                <small>${result.existing_tables.join(', ')}</small>
+                            </div>
+                        `;
+                        document.getElementById('migrateBtn').disabled = true;
+                        document.getElementById('migrateBtn').textContent = 'Migration bereits abgeschlossen';
+                    } else {
+                        status.innerHTML = `
+                            <div class="status error">
+                                <strong>⚠️ Migration erforderlich</strong><br>
+                                Keine E-Commerce Tabellen in der Datenbank gefunden.
+                            </div>
+                        `;
+                    }
+                } else {
+                    throw new Error(result.error || 'Unbekannter Fehler');
+                }
+            } catch (error) {
+                status.innerHTML = `
+                    <div class="status error">
+                        <strong>❌ Fehler beim Prüfen:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Status prüfen';
+            }
+        }
+
+        async function runMigration() {
+            const btn = document.getElementById('migrateBtn');
+            const result = document.getElementById('result');
+            
+            btn.disabled = true;
+            btn.textContent = 'Migration läuft...';
+            result.innerHTML = '<div class="loading">Migration wird ausgeführt... Dies kann einige Minuten dauern.</div>';
+
+            try {
+                const response = await fetch(
+                    `https://${projectId}.supabase.co/functions/v1/make-server-0a65d7a9/migrate/create-tables`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${publicAnonKey}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+                const migrationResult = await response.json();
+                
+                if (migrationResult.success) {
+                    result.innerHTML = `
+                        <div class="status success">
+                            <strong>🎉 Migration erfolgreich!</strong><br>
+                            ${migrationResult.message}<br>
+                            <small>Erstellt um: ${new Date(migrationResult.timestamp).toLocaleString('de-DE')}</small>
+                            ${migrationResult.tables_created ? `
+                                <br><br><strong>Erstellte Tabellen:</strong><br>
+                                <small>${migrationResult.tables_created.join(', ')}</small>
+                            ` : ''}
+                        </div>
+                    `;
+                    
+                    // Status aktualisieren
+                    setTimeout(() => checkTables(), 2000);
+                } else {
+                    result.innerHTML = `
+                        <div class="status error">
+                            <strong>❌ Migration fehlgeschlagen</strong><br>
+                            ${migrationResult.details || migrationResult.error}
+                            ${migrationResult.existing ? '<br><small>(Tabellen existieren bereits - kein Fehler)</small>' : ''}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="status error">
+                        <strong>❌ Netzwerk-Fehler:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Migration starten';
+            }
+        }
+
+        // Automatisch Status prüfen beim Laden
+        document.addEventListener('DOMContentLoaded', () => {
+            checkTables();
+        });
+    </script>
+</body>
+</html>
