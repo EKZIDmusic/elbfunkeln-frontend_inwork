@@ -72,7 +72,7 @@ function AppContent() {
       case 'reset-password':
         return <ResetPasswordPage />;
       case 'admin':
-        return isShopOwner() ? <AdminPage /> : <LoginPage />;
+        return (isAdmin() || isShopOwner()) ? <AdminPage /> : <LoginPage />;
       case 'admin-dashboard':
         return isAdmin() ? <AdminDashboardPage /> : <LoginPage />;
       case 'admin-data':
