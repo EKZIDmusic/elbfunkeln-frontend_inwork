@@ -85,14 +85,16 @@ const setStoredFavorites = (userId: string | null, favorites: string[]): void =>
 
 // Map API CartItem to local CartItem
 const mapAPICartItemToLocal = (apiItem: APICartItem): CartItem => {
-  const primaryImage = apiItem.product.images.find(img => img.isPrimary);
-  const imageUrl = primaryImage?.url || apiItem.product.images[0]?.url || '';
-  
+  // Safe access to images array
+  const images = apiItem.product?.images || [];
+  const primaryImage = images.find(img => img.isPrimary);
+  const imageUrl = primaryImage?.url || images[0]?.url || 'https://via.placeholder.com/400x400?text=Kein+Bild';
+
   return {
     id: apiItem.id,
     productId: apiItem.productId,
-    name: apiItem.product.name,
-    price: apiItem.product.discountPrice || apiItem.product.price,
+    name: apiItem.product?.name || 'Unbekanntes Produkt',
+    price: apiItem.product?.discountPrice || apiItem.product?.price || 0,
     image: imageUrl,
     quantity: apiItem.quantity,
   };

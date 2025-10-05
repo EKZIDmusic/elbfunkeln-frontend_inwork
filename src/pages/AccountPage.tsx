@@ -587,25 +587,35 @@ export function AccountPage() {
                       </div>
                       
                       <div className="space-y-3">
-                        {order.items.map((item, index) => (
-                          <div key={index} className="flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-lg overflow-hidden">
-                              <ImageWithFallback
-                                src={item.product.image}
-                                alt={item.product.name}
-                                className="w-full h-full object-cover"
-                              />
+                        {order.items.map((item, index) => {
+                          // Safe image access - handle both old mock data (image) and new API data (images)
+                          const getProductImage = () => {
+                            if (item.product?.image) return item.product.image;
+                            if (item.product?.images?.[0]?.url) return item.product.images[0].url;
+                            if (typeof item.product?.images?.[0] === 'string') return item.product.images[0];
+                            return 'https://via.placeholder.com/400x400?text=Kein+Bild';
+                          };
+
+                          return (
+                            <div key={index} className="flex items-center gap-4">
+                              <div className="w-16 h-16 rounded-lg overflow-hidden">
+                                <ImageWithFallback
+                                  src={getProductImage()}
+                                  alt={item.product?.name || 'Produkt'}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-inter text-elbfunkeln-green">
+                                  {item.product?.name || 'Unbekanntes Produkt'}
+                                </h4>
+                                <p className="font-inter text-sm text-elbfunkeln-green/60">
+                                  Anzahl: {item.quantity} • €{item.product?.price || 0}
+                                </p>
+                              </div>
                             </div>
-                            <div className="flex-1">
-                              <h4 className="font-inter text-elbfunkeln-green">
-                                {item.product.name}
-                              </h4>
-                              <p className="font-inter text-sm text-elbfunkeln-green/60">
-                                Anzahl: {item.quantity} • €{item.product.price}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                       
                       <div className="flex gap-2 mt-4 pt-4 border-t border-elbfunkeln-lavender/20">
