@@ -385,7 +385,7 @@ export function EnhancedProductManager() {
     return matchesCategory && matchesSearch;
   });
 
-  const categories = Array.from(new Set(products.map(p => p.category)));
+  const categories = Array.from(new Set(products.map(p => typeof p.category === 'object' ? p.category.name : p.category)));
 
   if (loading) {
     return (

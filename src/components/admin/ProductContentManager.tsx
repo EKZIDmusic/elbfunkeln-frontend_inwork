@@ -132,7 +132,7 @@ export function ProductContentManager() {
     return matchesSearch && matchesCategory;
   });
 
-  const categories = ['all', ...Array.from(new Set(products.map(p => p.category)))];
+  const categories = ['all', ...Array.from(new Set(products.map(p => typeof p.category === 'object' ? p.category.name : p.category)))];
 
   const handleSaveProduct = () => {
     if (!selectedProduct) return;
@@ -276,7 +276,7 @@ export function ProductContentManager() {
                         <div className="flex-1">
                           <h4 className="font-cormorant text-elbfunkeln-green">{product.name}</h4>
                           <p className="font-inter text-xs text-elbfunkeln-green/60 mb-2">
-                            {product.category} • SKU: {product.id}
+                            {typeof product.category === 'object' ? product.category.name : product.category} • SKU: {product.id}
                           </p>
                           <p className="font-inter text-sm text-elbfunkeln-green/70 line-clamp-2">
                             {product.description.substring(0, 100)}...

@@ -185,7 +185,7 @@ export function StaticProductGrid({
                     )}
                     {showCategory && product.category && (
                       <Badge variant="outline" className="bg-white/90">
-                        {product.category}
+                        {typeof product.category === 'object' ? product.category.name : product.category}
                       </Badge>
                     )}
                   </div>

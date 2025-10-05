@@ -510,7 +510,7 @@ export function ProductManager() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline">{product.category}</Badge>
+                  <Badge variant="outline">{typeof product.category === 'object' ? product.category.name : product.category}</Badge>
                 </TableCell>
                 <TableCell>
                   <span className="font-semibold">{product.price.toFixed(2)} €</span>
