@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { useRouter } from '../components/Router';
-import { elbfunkelnService } from '../services/elbfunkelnService';
+import apiService from '../services/apiService';
 import { useState } from 'react';
 
 const teamMembers = [
@@ -52,20 +52,13 @@ export function AboutPage() {
 
     setIsLoading(true);
     try {
-      const success = await elbfunkelnService.subscribeToNewsletter({
-        email,
-        first_name: firstName,
-        source: 'about-page'
-      });
-
-      if (success) {
-        setIsSubscribed(true);
-        setTimeout(() => {
-          setIsSubscribed(false);
-          setEmail('');
-          setFirstName('');
-        }, 5000);
-      }
+      await apiService.newsletter.subscribe({ email });
+      setIsSubscribed(true);
+      setTimeout(() => {
+        setIsSubscribed(false);
+        setEmail('');
+        setFirstName('');
+      }, 5000);
     } catch (error) {
       console.error('Newsletter subscription failed:', error);
     } finally {

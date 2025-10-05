@@ -11,7 +11,31 @@ import { Checkbox } from '../ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Separator } from '../ui/separator';
 import { toast } from 'sonner@2.0.3';
-import { getProducts, createProduct, updateProduct, deleteProduct, type Product } from '../../services/supabaseService';
+import apiService, { Product } from '../../services/apiService';
+
+// Compatibility wrapper functions
+const getProducts = async () => {
+  const response = await apiService.products.getAll();
+  return response.data;
+};
+
+const createProduct = async (product: any) => {
+  console.log('TODO: Implement createProduct in API');
+  toast.info('Produkterstellung ist noch nicht verfügbar');
+  return product;
+};
+
+const updateProduct = async (id: string, product: any) => {
+  console.log('TODO: Implement updateProduct in API');
+  toast.info('Produktaktualisierung ist noch nicht verfügbar');
+  return product;
+};
+
+const deleteProduct = async (id: string) => {
+  console.log('TODO: Implement deleteProduct in API');
+  toast.info('Produktlöschung ist noch nicht verfügbar');
+  return true;
+};
 
 // Erweiterte Produktdatenstruktur
 export interface EnhancedProduct extends Product {

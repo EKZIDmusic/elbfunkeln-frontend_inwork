@@ -15,8 +15,32 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { useAuth } from '../AuthContext';
-import { getProducts, createProduct, updateProduct, deleteProduct, type Product } from '../../services/supabaseService';
+import apiService, { Product } from '../../services/apiService';
 import { toast } from 'sonner@2.0.3';
+
+// Compatibility wrapper functions
+const getProducts = async () => {
+  const response = await apiService.products.getAll();
+  return response.data;
+};
+
+const createProduct = async (product: any) => {
+  console.log('TODO: Implement createProduct in API');
+  toast.info('Produkterstellung ist noch nicht verfügbar');
+  return product;
+};
+
+const updateProduct = async (id: string, product: any) => {
+  console.log('TODO: Implement updateProduct in API');
+  toast.info('Produktaktualisierung ist noch nicht verfügbar');
+  return product;
+};
+
+const deleteProduct = async (id: string) => {
+  console.log('TODO: Implement deleteProduct in API');
+  toast.info('Produktlöschung ist noch nicht verfügbar');
+  return true;
+};
 
 interface ProductFormData {
   name: string;

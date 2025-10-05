@@ -18,7 +18,41 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { useAuth } from '../AuthContext';
-import { getUsers, getUserStats, type User } from '../../services/supabaseService';
+
+// Placeholder types and functions until API is implemented
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: 'customer' | 'shopowner' | 'admin';
+  status: 'active' | 'inactive' | 'banned';
+  email_verified: boolean;
+  created_at: string;
+  updated_at: string;
+  last_login?: string;
+  login_attempts: number;
+  banned_until?: string | null;
+  banned_reason?: string | null;
+  total_orders: number;
+  total_spent: number;
+}
+
+const getUsers = async (): Promise<User[]> => {
+  console.log('TODO: Implement getUsers in API');
+  return [];
+};
+
+const getUserStats = async () => {
+  console.log('TODO: Implement getUserStats in API');
+  return {
+    total: 0,
+    active: 0,
+    inactive: 0,
+    banned: 0,
+    newThisMonth: 0,
+    byRole: { admin: 0, shopowner: 0, customer: 0 }
+  };
+};
 
 interface UserStats {
   total: number;

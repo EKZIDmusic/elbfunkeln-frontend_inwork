@@ -66,44 +66,49 @@ export function ShopPage() {
   // Filter and sort products
   const filteredAndSortedProducts = () => {
     let filtered = [...products];
-    
-    // Filter by category
+
+    // Filter by category (with null-safety)
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(p => p.category.slug === selectedCategory || p.category.id === selectedCategory);
+      filtered = filtered.filter(p =>
+        p.category?.slug === selectedCategory || p.category?.id === selectedCategory
+      );
     }
-    
+
     // Filter by sale
     if (showSaleOnly) {
-      filtered = filtered.filter(p => p.discountPrice !== null);
+      filtered = filtered.filter(p => p.discountPrice !== null && p.discountPrice !== undefined);
     }
-    
+
     // Filter only active products
     filtered = filtered.filter(p => p.isActive);
-    
+
     // Sort
     switch (sortBy) {
       case 'name':
         filtered.sort((a, b) => a.name.localeCompare(b.name));
         break;
       case 'price-low':
-        filtered.sort((a, b) => (a.discountPrice || a.price) - (b.discountPrice || b.price));
+        filtered.sort((a, b) => (a.discountPrice ?? a.price) - (b.discountPrice ?? b.price));
         break;
       case 'price-high':
-        filtered.sort((a, b) => (b.discountPrice || b.price) - (a.discountPrice || a.price));
+        filtered.sort((a, b) => (b.discountPrice ?? b.price) - (a.discountPrice ?? a.price));
         break;
       case 'new':
         filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         break;
     }
-    
+
     return filtered;
   };
 
   const displayedProducts = filteredAndSortedProducts();
 
   const getPrimaryImage = (product: Product): string => {
+    if (!product.images || product.images.length === 0) {
+      return 'https://via.placeholder.com/400x400?text=Kein+Bild';
+    }
     const primaryImage = product.images.find(img => img.isPrimary);
-    return primaryImage?.url || product.images[0]?.url || '';
+    return primaryImage?.url || product.images[0]?.url || 'https://via.placeholder.com/400x400?text=Kein+Bild';
   };
 
   const handleAddToCart = (product: Product) => {
@@ -267,10 +272,10 @@ export function ShopPage() {
                   </div>
                   <div className={`p-4 ${viewMode === 'list' ? 'flex-1 flex flex-col justify-between' : ''}`}>
                     <div>
-                      <p className="text-sm text-elbfunkeln-rose mb-1">{product.category.name}</p>
+                      <p className="text-sm text-elbfunkeln-rose mb-1">{product.category?.name || 'Unkategorisiert'}</p>
                       <h3 className="font-cormorant mb-2 text-elbfunkeln-green">{product.name}</h3>
                       {viewMode === 'list' && (
-                        <p className="text-sm text-elbfunkeln-green/80 mb-4 line-clamp-2">{product.description}</p>
+                        <p className="text-sm text-elbfunkeln-green/80 mb-4 line-clamp-2">{product.description || ''}</p>
                       )}
                       <div className="flex items-center gap-2 mb-4">
                         {product.discountPrice ? (

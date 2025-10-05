@@ -17,10 +17,30 @@ import {
   Trash2,
   Plus
 } from 'lucide-react';
-import { elbfunkelnService, Product, Order, ContactInquiry, NewsletterSubscriber } from '../services/elbfunkelnService';
+import apiService, { Product, Order } from '../services/apiService';
 import { useAuth } from '../components/AuthContext';
 import { EnhancedUserManager } from '../components/admin/EnhancedUserManager';
 import { RegistrationDebugger } from '../components/admin/RegistrationDebugger';
+
+// Placeholder types until we implement these in apiService
+interface ContactInquiry {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  status: string;
+  created_at: string;
+}
+
+interface NewsletterSubscriber {
+  id: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  subscribed_at: string;
+  is_active: boolean;
+  source?: string;
+}
 
 export function AdminDataPage() {
   const { isAdmin, isShopOwner } = useAuth();
@@ -46,19 +66,28 @@ export function AdminDataPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [statsData, productsData, ordersData, inquiriesData, subscribersData] = await Promise.all([
-        elbfunkelnService.getShopStats(),
-        elbfunkelnService.getProducts({ limit: 10 }),
-        elbfunkelnService.getAllOrders(),
-        elbfunkelnService.getContactInquiries(),
-        elbfunkelnService.getNewsletterSubscribers()
+      // Load only data that exists in apiService
+      const [productsResponse, ordersData] = await Promise.all([
+        apiService.products.getAll({ limit: 10 }),
+        apiService.orders.getAll()
       ]);
 
-      setStats(statsData);
-      setProducts(productsData);
+      setProducts(productsResponse.data);
       setOrders(ordersData);
-      setInquiries(inquiriesData);
-      setSubscribers(subscribersData);
+
+      // Calculate stats from loaded data
+      const totalRevenue = ordersData.reduce((sum, order) => sum + order.total, 0);
+      setStats({
+        totalProducts: productsResponse.total,
+        totalOrders: ordersData.length,
+        totalRevenue,
+        newsletterSubscribers: 0, // TODO: Implement in API
+        pendingInquiries: 0 // TODO: Implement in API
+      });
+
+      // Placeholders for not yet implemented features
+      setInquiries([]);
+      setSubscribers([]);
     } catch (error) {
       console.error('Error loading admin data:', error);
     } finally {
@@ -276,7 +305,7 @@ export function AdminDataPage() {
                             <TableCell>
                               <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
                                 <img
-                                  src={product.images?.[0]?.image_url || 'https://via.placeholder.com/48x48'}
+                                  src={product.images?.[0]?.url || 'https://via.placeholder.com/48x48'}
                                   alt={product.name}
                                   className="w-full h-full object-cover"
                                 />
@@ -286,13 +315,13 @@ export function AdminDataPage() {
                             <TableCell>{product.category?.name || 'Unbekannt'}</TableCell>
                             <TableCell>{formatPrice(product.price)}</TableCell>
                             <TableCell>
-                              <Badge className={product.stock_quantity > 5 ? 'bg-green-100 text-green-800' : product.stock_quantity > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}>
-                                {product.stock_quantity}
+                              <Badge className={product.stock > 5 ? 'bg-green-100 text-green-800' : product.stock > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}>
+                                {product.stock}
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <Badge className={product.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                                {product.is_active ? 'Aktiv' : 'Inaktiv'}
+                              <Badge className={product.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                                {product.isActive ? 'Aktiv' : 'Inaktiv'}
                               </Badge>
                             </TableCell>
                             <TableCell>
@@ -340,12 +369,12 @@ export function AdminDataPage() {
                       <TableBody>
                         {orders.map((order) => (
                           <TableRow key={order.id}>
-                            <TableCell className="font-mono">{order.order_number}</TableCell>
-                            <TableCell>{order.customer?.display_name || 'Unbekannt'}</TableCell>
-                            <TableCell>{formatDate(order.created_at)}</TableCell>
-                            <TableCell>{formatPrice(order.total_amount)}</TableCell>
+                            <TableCell className="font-mono">{order.orderNumber}</TableCell>
+                            <TableCell>Kunde #{order.userId}</TableCell>
+                            <TableCell>{formatDate(order.createdAt)}</TableCell>
+                            <TableCell>{formatPrice(order.total)}</TableCell>
                             <TableCell>{getStatusBadge(order.status)}</TableCell>
-                            <TableCell>{getStatusBadge(order.payment_status)}</TableCell>
+                            <TableCell>{getStatusBadge(order.paymentStatus)}</TableCell>
                             <TableCell>
                               <div className="flex gap-2">
                                 <Button size="sm" variant="outline">
