@@ -83,7 +83,7 @@ export function AdminDashboardPage() {
     { id: 8, timestamp: '2024-01-20 14:00:00', level: 'INFO', message: 'Server uptime: 127 days, 14 hours', source: 'SYSTEM' }
   ]);
 
-  if (!user || user.role !== 'admin') {
+  if (!user || user.role !== 'ADMIN') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-elbfunkeln-beige via-white to-elbfunkeln-lavender/10 flex items-center justify-center">
         <Card className="p-8 max-w-md mx-auto border-elbfunkeln-green/20">

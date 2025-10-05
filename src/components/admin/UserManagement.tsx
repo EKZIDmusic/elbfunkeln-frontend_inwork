@@ -111,16 +111,44 @@ const transformActivity = (apiActivity: ApiUserActivity): UserActivityLog => ({
 
 const elbfunkelnUserService = {
   getAllUsers: async (): Promise<UserProfile[]> => {
-    const users = await apiService.admin.users.getAll();
-    return users.map(transformUser);
+    try {
+      const users = await apiService.admin.users.getAll();
+      // Ensure we have an array
+      if (!Array.isArray(users)) {
+        console.error('API returned non-array response:', users);
+        return [];
+      }
+      return users.map(transformUser);
+    } catch (error) {
+      console.error('Error in getAllUsers:', error);
+      throw error;
+    }
   },
   getUserSessions: async (userId: string): Promise<UserSession[]> => {
-    const sessions = await apiService.admin.users.getSessions(userId);
-    return sessions.map(transformSession);
+    try {
+      const sessions = await apiService.admin.users.getSessions(userId);
+      if (!Array.isArray(sessions)) {
+        console.error('API returned non-array sessions:', sessions);
+        return [];
+      }
+      return sessions.map(transformSession);
+    } catch (error) {
+      console.error('Error in getUserSessions:', error);
+      throw error;
+    }
   },
   getUserActivity: async (userId: string, limit: number): Promise<UserActivityLog[]> => {
-    const activities = await apiService.admin.users.getActivity(userId, limit);
-    return activities.map(transformActivity);
+    try {
+      const activities = await apiService.admin.users.getActivity(userId, limit);
+      if (!Array.isArray(activities)) {
+        console.error('API returned non-array activities:', activities);
+        return [];
+      }
+      return activities.map(transformActivity);
+    } catch (error) {
+      console.error('Error in getUserActivity:', error);
+      throw error;
+    }
   },
   updateUserRole: async (userId: string, newRole: 'customer' | 'shopowner' | 'admin'): Promise<boolean> => {
     const roleMap = { customer: 'CUSTOMER', shopowner: 'SHOP_OWNER', admin: 'ADMIN' } as const;
