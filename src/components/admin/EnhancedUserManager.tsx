@@ -83,8 +83,8 @@ interface SecurityLog {
   created_at: string;
 }
 
-// TODO: Implement user management in new MariaDB API
-const API_BASE_URL = ''; // Disabled - not implemented in new API
+// MariaDB API for user management
+import apiService from '../../services/apiService';
 
 export function EnhancedUserManager() {
   const { accessToken, user: currentUser } = useAuth();
@@ -114,59 +114,27 @@ export function EnhancedUserManager() {
   const loadUsers = async () => {
     setIsLoading(true);
     try {
-      // In a real implementation, this would fetch from the user management API
-      // For now, we'll use mock data that includes our demo users
-      const mockUsers: UserProfile[] = [
-        {
-          id: 'admin-1',
-          email: 'admin@elbfunkeln.de',
-          first_name: 'System',
-          last_name: 'Administrator',
-          display_name: 'System Administrator',
-          role: 'admin',
-          status: 'active',
-          email_verified: true,
-          marketing_consent: false,
-          total_orders: 0,
-          total_spent: 0,
-          last_login: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          created_at: '2022-01-01T00:00:00Z'
-        },
-        {
-          id: 'owner-1',
-          email: 'owner@elbfunkeln.de',
-          first_name: 'Anna',
-          last_name: 'Schmidt',
-          display_name: 'Anna Schmidt',
-          phone: '+49 40 123 456 789',
-          role: 'shopowner',
-          status: 'active',
-          email_verified: true,
-          marketing_consent: true,
-          total_orders: 0,
-          total_spent: 0,
-          last_login: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-          created_at: '2022-01-15T00:00:00Z'
-        },
-        {
-          id: 'customer-1',
-          email: 'sarah.mueller@example.com',
-          first_name: 'Sarah',
-          last_name: 'Müller',
-          display_name: 'Sarah Müller',
-          phone: '+49 40 987 654 321',
-          role: 'customer',
-          status: 'active',
-          email_verified: true,
-          marketing_consent: true,
-          total_orders: 7,
-          total_spent: 425.50,
-          last_login: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-          created_at: '2022-03-15T00:00:00Z'
-        }
-      ];
+      const apiUsers = await apiService.admin.users.getAll();
 
-      setUsers(mockUsers);
+      // Transform API users to UserProfile format
+      const transformedUsers: UserProfile[] = apiUsers.map(apiUser => ({
+        id: apiUser.id,
+        email: apiUser.email,
+        first_name: apiUser.firstName || '',
+        last_name: apiUser.lastName || '',
+        display_name: `${apiUser.firstName || ''} ${apiUser.lastName || ''}`.trim() || apiUser.email,
+        phone: apiUser.phone || '',
+        role: apiUser.role.toLowerCase() as 'admin' | 'shopowner' | 'customer',
+        status: apiUser.status || 'active',
+        email_verified: apiUser.emailVerified || false,
+        marketing_consent: false,
+        total_orders: apiUser.totalOrders || 0,
+        total_spent: apiUser.totalSpent || 0,
+        last_login: apiUser.lastLogin || apiUser.createdAt,
+        created_at: apiUser.createdAt
+      }));
+
+      setUsers(transformedUsers);
     } catch (error) {
       console.error('Error loading users:', error);
       setMessage('❌ Fehler beim Laden der Benutzer.');
@@ -200,41 +168,23 @@ export function EnhancedUserManager() {
 
   const loadUserSecurityLogs = async (userId: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/admin/user-security-logs/${userId}`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
+      const logs = await apiService.admin.users.getActivity(userId, 20);
 
-      if (response.ok) {
-        const data = await response.json();
-        setSecurityLogs(data.logs || []);
-      } else {
-        // Mock security logs for demo
-        const mockLogs: SecurityLog[] = [
-          {
-            id: '1',
-            user_id: userId,
-            event_type: 'login',
-            event_description: 'Successful login',
-            success: true,
-            ip_address: '192.168.1.100',
-            created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-          },
-          {
-            id: '2',
-            user_id: userId,
-            event_type: 'password_change',
-            event_description: 'Password changed by user',
-            success: true,
-            ip_address: '192.168.1.100',
-            created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-          }
-        ];
-        setSecurityLogs(mockLogs);
-      }
+      // Transform API activity to SecurityLog format
+      const transformedLogs: SecurityLog[] = logs.map(log => ({
+        id: log.id,
+        user_id: log.userId,
+        event_type: log.actionType,
+        event_description: log.description || log.actionType,
+        success: log.success,
+        ip_address: log.ipAddress || 'N/A',
+        created_at: log.createdAt
+      }));
+
+      setSecurityLogs(transformedLogs);
     } catch (error) {
       console.error('Error loading security logs:', error);
+      setSecurityLogs([]);
     }
   };
 
@@ -276,10 +226,13 @@ export function EnhancedUserManager() {
   const updateUserStatus = async (userId: string, newStatus: UserProfile['status']) => {
     setIsLoading(true);
     try {
-      // In a real implementation, this would call the API
-      setUsers(prev => prev.map(user => 
+      await apiService.admin.users.updateStatus(userId, { status: newStatus });
+
+      // Update local state
+      setUsers(prev => prev.map(user =>
         user.id === userId ? { ...user, status: newStatus } : user
       ));
+
       setMessage(`✅ Benutzerstatus erfolgreich auf "${newStatus}" geändert.`);
     } catch (error) {
       console.error('Status update error:', error);

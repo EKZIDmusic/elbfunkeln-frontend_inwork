@@ -14,6 +14,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { useAuth } from '../AuthContext';
+import apiService, { Order as ApiOrder } from '../../services/apiService';
+import { toast } from 'sonner@2.0.3';
 
 interface OrderItem {
   id: string;
@@ -32,50 +34,52 @@ interface Order {
   items: OrderItem[];
 }
 
-// Mock data für Demo-Zwecke
-const mockOrders: Order[] = [
-  {
-    id: 'ORD-12345',
-    customer_name: 'Anna Müller',
-    customer_email: 'anna.mueller@email.com',
-    status: 'pending',
-    created_at: '2024-01-15T10:30:00Z',
-    total: 89.99,
-    items: [
-      { id: '1', product_name: 'Silber Armband "Luna"', quantity: 1, price: 89.99 }
-    ]
-  },
-  {
-    id: 'ORD-12346',
-    customer_name: 'Maria Schmidt',
-    customer_email: 'maria.schmidt@email.com',
-    status: 'processing',
-    created_at: '2024-01-14T15:45:00Z',
-    total: 129.99,
-    items: [
-      { id: '2', product_name: 'Gold Ohrringe "Stella"', quantity: 1, price: 129.99 }
-    ]
-  },
-  {
-    id: 'ORD-12347',
-    customer_name: 'Lisa Weber',
-    customer_email: 'lisa.weber@email.com',
-    status: 'shipped',
-    created_at: '2024-01-12T08:15:00Z',
-    total: 149.99,
-    items: [
-      { id: '3', product_name: 'Roségold Kette "Harmony"', quantity: 1, price: 149.99 }
-    ]
-  }
-];
-
 export function OrderManager() {
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const { accessToken } = useAuth();
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+
+  // Load orders on mount
+  useEffect(() => {
+    if (accessToken) {
+      loadOrders();
+    }
+  }, [accessToken]);
+
+  const loadOrders = async () => {
+    try {
+      setLoading(true);
+      const apiOrders = await apiService.admin.orders.getAll();
+
+      // Transform API orders to component format
+      const transformedOrders: Order[] = apiOrders.map(order => ({
+        id: order.id,
+        customer_name: `${order.user?.firstName || ''} ${order.user?.lastName || ''}`.trim() || 'Unbekannt',
+        customer_email: order.user?.email || 'Keine E-Mail',
+        status: order.status.toLowerCase() as Order['status'],
+        created_at: order.createdAt,
+        total: order.totalAmount,
+        items: order.items.map(item => ({
+          id: item.id,
+          product_name: item.product?.name || 'Unbekanntes Produkt',
+          quantity: item.quantity,
+          price: item.price
+        }))
+      }));
+
+      setOrders(transformedOrders);
+      toast.success('Bestellungen erfolgreich geladen');
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      toast.error('Fehler beim Laden der Bestellungen');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter orders
   const filteredOrders = orders.filter(order => {
@@ -93,13 +97,17 @@ export function OrderManager() {
   const handleStatusUpdate = async (orderId: string, newStatus: Order['status']) => {
     try {
       setLoading(true);
-      
-      const updatedOrder = await updateOrderStatus(orderId, newStatus);
-      setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
-      
-      onSuccess(`Bestellstatus erfolgreich auf "${getStatusLabel(newStatus)}" geändert`);
+
+      await apiService.admin.orders.updateStatus(orderId, { status: newStatus.toUpperCase() as any });
+
+      // Update local state
+      setOrders(orders.map(o =>
+        o.id === orderId ? { ...o, status: newStatus } : o
+      ));
+
+      toast.success(`Bestellstatus erfolgreich auf "${getStatusLabel(newStatus)}" geändert`);
     } catch (error) {
-      onError(error instanceof Error ? error.message : 'Fehler beim Ändern des Bestellstatus');
+      toast.error(error instanceof Error ? error.message : 'Fehler beim Ändern des Bestellstatus');
     } finally {
       setLoading(false);
     }

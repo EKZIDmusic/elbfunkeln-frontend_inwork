@@ -133,14 +133,39 @@ export const defaultAccountSettings: Omit<CompleteAccountSettings, 'userId' | 'l
 };
 
 class AccountSettingsService {
-  // TODO: Implement account settings in new MariaDB API
-  // For now, using localStorage only
-  private baseUrl = ''; // Disabled - not implemented in new API
+  // Using MariaDB API for account settings
+  private baseUrl = 'https://api.elbfunkeln.de/api';
 
   private async makeRequest(endpoint: string, options: RequestInit = {}, accessToken?: string) {
-    // Account settings not yet implemented in new API
-    // Always use localStorage for now
-    throw new Error('Account settings API not yet implemented - using local storage');
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      ...options,
+      headers: {
+        ...headers,
+        ...options.headers,
+      },
+    });
+
+    if (response.status === 401) {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('elbfunkeln_user');
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      throw new Error('Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.');
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `API Error: ${response.statusText}`);
+    }
+
+    return response.json();
   }
 
   private getLocalStorageKey(userId: string): string {

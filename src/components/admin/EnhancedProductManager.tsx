@@ -13,27 +13,47 @@ import { Separator } from '../ui/separator';
 import { toast } from 'sonner@2.0.3';
 import apiService, { Product } from '../../services/apiService';
 
-// Compatibility wrapper functions
+// API wrapper functions
 const getProducts = async () => {
   const response = await apiService.products.getAll();
   return response.data;
 };
 
 const createProduct = async (product: any) => {
-  console.log('TODO: Implement createProduct in API');
-  toast.info('Produkterstellung ist noch nicht verfügbar');
-  return product;
+  const productData = {
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    sku: product.sku || `SKU-${Date.now()}`,
+    stock: product.stock,
+    categoryId: product.categoryId || product.category,
+    isActive: product.status === 'active',
+    discountPrice: product.discountPrice || product.salePrice,
+    isFeatured: product.isFeatured || false,
+    giftboxavailable: product.giftWrappingAvailable || product.giftboxavailable || false
+  };
+
+  return await apiService.admin.products.create(productData);
 };
 
 const updateProduct = async (id: string, product: any) => {
-  console.log('TODO: Implement updateProduct in API');
-  toast.info('Produktaktualisierung ist noch nicht verfügbar');
-  return product;
+  const productData = {
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    stock: product.stock,
+    categoryId: product.categoryId || product.category,
+    isActive: product.status === 'active',
+    discountPrice: product.discountPrice || product.salePrice,
+    isFeatured: product.isFeatured,
+    giftboxavailable: product.giftWrappingAvailable || product.giftboxavailable
+  };
+
+  return await apiService.admin.products.update(id, productData);
 };
 
 const deleteProduct = async (id: string) => {
-  console.log('TODO: Implement deleteProduct in API');
-  toast.info('Produktlöschung ist noch nicht verfügbar');
+  await apiService.admin.products.delete(id);
   return true;
 };
 

@@ -5,9 +5,8 @@ import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Database, Users, ShoppingCart, Mail, MessageSquare, Activity, Settings, BarChart3 } from 'lucide-react';
-
-// TODO: Implement database overview in new MariaDB API
-// This component is currently disabled as it relied on Supabase direct queries
+import apiService from '../../services/apiService';
+import { toast } from 'sonner@2.0.3';
 
 interface TableInfo {
   table_name: string;
@@ -48,39 +47,37 @@ export function DatabaseOverview() {
   const loadDatabaseStats = async () => {
     setLoading(true);
     try {
-      // Database overview not yet implemented in new API
-      // Using placeholder data for now
-      console.log('TODO: Implement database overview in API');
+      // Fetch admin stats from API
+      const adminStats = await apiService.admin.analytics.getStats();
 
-      const tableResults: any[] = [];
-      const accessibleTables = tableResults.filter(t => t.accessible);
-      setTableData(accessibleTables);
+      // Create table info based on available data
+      const tables: TableInfo[] = [
+        { table_name: 'users', row_count: adminStats.totalCustomers },
+        { table_name: 'orders', row_count: adminStats.totalOrders },
+        { table_name: 'newsletter_subscribers', row_count: adminStats.newsletterSubscribers },
+        { table_name: 'contact_inquiries', row_count: adminStats.pendingInquiries }
+      ];
 
-      // Berechne Gesamtstatistiken nur für zugängliche Tabellen
-      const totalRows = accessibleTables.reduce((sum, table) => sum + table.row_count, 0);
-      
-      // Spezifische Statistiken - mit Fallback auf 0
-      const userCount = accessibleTables.find(t => t.table_name === 'user_profiles')?.row_count || 0;
-      const orderCount = accessibleTables.find(t => t.table_name === 'orders')?.row_count || 0;
-      const newsletterCount = accessibleTables.find(t => t.table_name === 'newsletter_subscribers')?.row_count || 0;
-      const contactCount = accessibleTables.find(t => t.table_name === 'contact_inquiries')?.row_count || 0;
-      const sessionCount = accessibleTables.find(t => t.table_name === 'user_sessions')?.row_count || 0;
-      const activityCount = accessibleTables.find(t => t.table_name === 'user_activity_log')?.row_count || 0;
+      setTableData(tables);
+
+      const totalRows = tables.reduce((sum, table) => sum + table.row_count, 0);
 
       setStats({
-        totalTables: accessibleTables.length,
+        totalTables: tables.length,
         totalRows,
-        activeUsers: userCount,
-        totalOrders: orderCount,
-        newsletterSubscribers: newsletterCount,
-        contactInquiries: contactCount,
-        activeSessions: sessionCount,
-        activityLogs: activityCount
+        activeUsers: adminStats.totalCustomers,
+        totalOrders: adminStats.totalOrders,
+        newsletterSubscribers: adminStats.newsletterSubscribers,
+        contactInquiries: adminStats.pendingInquiries,
+        activeSessions: 0, // Not available in current API
+        activityLogs: 0 // Not available in current API
       });
 
       setLastRefresh(new Date());
+      toast.success('Datenbankstatistiken erfolgreich geladen');
     } catch (error) {
       console.error('Error loading database stats:', error);
+      toast.error('Fehler beim Laden der Datenbankstatistiken');
       // Set minimal stats in case of complete failure
       setStats({
         totalTables: 0,
