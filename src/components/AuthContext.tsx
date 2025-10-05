@@ -68,13 +68,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         const storedToken = localStorage.getItem('auth_token');
         const storedUser = localStorage.getItem('elbfunkeln_user');
-        
+
         if (storedToken && storedUser) {
           try {
             const parsedUser = JSON.parse(storedUser);
             setAccessTokenState(storedToken);
             setUser(parsedUser);
-            
+
             // Verify token is still valid by getting profile
             try {
               const profile = await apiService.auth.getProfile();
@@ -89,7 +89,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               };
               setUser(updatedUser);
               localStorage.setItem('elbfunkeln_user', JSON.stringify(updatedUser));
-              
+
               // Load user-specific cart data
               if (cartActions) {
                 cartActions.loadUserData(profile.userId);
@@ -118,6 +118,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     checkSession();
+  }, []);
+
+  // Listen for 401 unauthorized events from API calls
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      console.log('🚨 Unauthorized event received - logging out user');
+      setUser(null);
+      setAccessTokenState(null);
+
+      // Clear cart data
+      if (cartActions) {
+        cartActions.clearAllData();
+      }
+
+      toast.error('Sitzung abgelaufen', {
+        description: 'Bitte melde dich erneut an.'
+      });
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {

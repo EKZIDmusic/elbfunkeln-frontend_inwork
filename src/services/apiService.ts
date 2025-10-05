@@ -7,7 +7,9 @@ const API_BASE_URL = 'https://api.elbfunkeln.de/api';
 
 // Helper function to get auth token
 const getAuthToken = (): string | null => {
-  return localStorage.getItem('auth_token');
+  const token = localStorage.getItem('auth_token');
+  console.log('📍 getAuthToken called, token exists:', !!token);
+  return token;
 };
 
 // Helper function to create headers
@@ -15,18 +17,24 @@ const createHeaders = (includeAuth: boolean = false): HeadersInit => {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
-  
+
   if (includeAuth) {
     const token = getAuthToken();
+    console.log('🔑 Creating headers with auth. Token:', token ? `${token.substring(0, 20)}...` : 'NULL');
+    console.log('📦 localStorage content:', localStorage.getItem('auth_token') ? 'EXISTS' : 'MISSING');
+
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+      console.log('✅ Authorization header set:', headers['Authorization']?.substring(0, 30) + '...');
+    } else {
+      console.error('❌ Auth required but no token found in localStorage');
     }
   }
-  
+
   return headers;
 };
 
-// Helper function for API calls
+// Helper function for API calls with automatic 401 handling
 async function apiCall<T>(
   endpoint: string,
   options: RequestInit = {},
@@ -42,6 +50,21 @@ async function apiCall<T>(
       ...options.headers,
     },
   });
+
+  // Handle 401 Unauthorized - Token is invalid/expired
+  if (response.status === 401) {
+    console.warn('🚨 401 Unauthorized - Removing invalid token and redirecting to login');
+
+    // Clear auth data
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('elbfunkeln_user');
+
+    // Trigger logout event for AuthContext to update
+    window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.');
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -441,7 +464,12 @@ export const newsletterApi = {
 // ============================================================================
 
 export const setAuthToken = (token: string) => {
+  console.log('💾 setAuthToken called with token:', token ? `${token.substring(0, 20)}...` : 'NULL');
   localStorage.setItem('auth_token', token);
+  console.log('✅ Token saved to localStorage');
+  // Verify it was saved
+  const saved = localStorage.getItem('auth_token');
+  console.log('🔍 Verification - Token in storage:', saved ? 'YES' : 'NO');
 };
 
 export const removeAuthToken = () => {
