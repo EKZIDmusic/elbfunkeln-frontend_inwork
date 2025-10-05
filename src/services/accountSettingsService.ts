@@ -133,34 +133,14 @@ export const defaultAccountSettings: Omit<CompleteAccountSettings, 'userId' | 'l
 };
 
 class AccountSettingsService {
-  private baseUrl = `https://${projectId}.supabase.co/functions/v1/make-server-0a65d7a9`;
+  // TODO: Implement account settings in new MariaDB API
+  // For now, using localStorage only
+  private baseUrl = ''; // Disabled - not implemented in new API
 
   private async makeRequest(endpoint: string, options: RequestInit = {}, accessToken?: string) {
-    // For fallback users, don't make API calls
-    if (accessToken === 'fallback-token') {
-      throw new Error('Fallback mode - using local storage');
-    }
-
-    // If no accessToken is provided, don't make API calls - use local storage
-    if (!accessToken) {
-      throw new Error('No access token provided - using local storage');
-    }
-
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
-        ...options.headers
-      }
-    });
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(`API Error (${response.status}): ${errorData}`);
-    }
-
-    return response.json();
+    // Account settings not yet implemented in new API
+    // Always use localStorage for now
+    throw new Error('Account settings API not yet implemented - using local storage');
   }
 
   private getLocalStorageKey(userId: string): string {
