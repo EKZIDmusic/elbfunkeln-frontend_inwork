@@ -680,6 +680,202 @@ export const ticketsApi = {
 };
 
 // ============================================================================
+// ADMIN - USER MANAGEMENT
+// ============================================================================
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  displayName?: string;
+  phone?: string;
+  role: 'CUSTOMER' | 'SHOP_OWNER' | 'ADMIN';
+  status: 'active' | 'inactive' | 'banned';
+  emailVerified: boolean;
+  marketingConsent: boolean;
+  twoFactorEnabled: boolean;
+  totalOrders: number;
+  totalSpent: number;
+  lastLogin?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserSession {
+  id: string;
+  userId: string;
+  deviceName?: string;
+  deviceType?: string;
+  browserName?: string;
+  ipAddress?: string;
+  isActive: boolean;
+  lastUsedAt: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface UserActivity {
+  id: string;
+  userId: string;
+  actionType: string;
+  description?: string;
+  ipAddress?: string;
+  success: boolean;
+  metadata?: any;
+  createdAt: string;
+}
+
+export interface UpdateUserRoleData {
+  role: 'CUSTOMER' | 'SHOP_OWNER' | 'ADMIN';
+}
+
+export interface UpdateUserStatusData {
+  status: 'active' | 'inactive' | 'banned';
+}
+
+export const adminUsersApi = {
+  getAll: () =>
+    apiCall<AdminUser[]>('/admin/users', {}, true),
+
+  getById: (userId: string) =>
+    apiCall<AdminUser>(`/admin/users/${userId}`, {}, true),
+
+  updateRole: (userId: string, data: UpdateUserRoleData) =>
+    apiCall<AdminUser>(`/admin/users/${userId}/role`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, true),
+
+  updateStatus: (userId: string, data: UpdateUserStatusData) =>
+    apiCall<AdminUser>(`/admin/users/${userId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, true),
+
+  getSessions: (userId: string) =>
+    apiCall<UserSession[]>(`/admin/users/${userId}/sessions`, {}, true),
+
+  revokeSession: (sessionId: string) =>
+    apiCall<{ message: string }>(`/admin/sessions/${sessionId}`, {
+      method: 'DELETE',
+    }, true),
+
+  revokeAllSessions: (userId: string) =>
+    apiCall<{ message: string }>(`/admin/users/${userId}/sessions`, {
+      method: 'DELETE',
+    }, true),
+
+  getActivity: (userId: string, limit: number = 20) =>
+    apiCall<UserActivity[]>(`/admin/users/${userId}/activity?limit=${limit}`, {}, true),
+};
+
+// ============================================================================
+// ADMIN - PRODUCTS
+// ============================================================================
+
+export interface CreateProductData {
+  name: string;
+  description: string;
+  price: number;
+  discountPrice?: number;
+  sku: string;
+  stock: number;
+  categoryId: string;
+  isActive?: boolean;
+  isFeatured?: boolean;
+  giftboxavailable?: boolean;
+}
+
+export interface UpdateProductData extends Partial<CreateProductData> {}
+
+export const adminProductsApi = {
+  create: (data: CreateProductData) =>
+    apiCall<Product>('/admin/products', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, true),
+
+  update: (id: string, data: UpdateProductData) =>
+    apiCall<Product>(`/admin/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, true),
+
+  delete: (id: string) =>
+    apiCall<{ message: string }>(`/admin/products/${id}`, {
+      method: 'DELETE',
+    }, true),
+
+  uploadImage: (productId: string, formData: FormData) =>
+    apiCall<ProductImage>(`/admin/products/${productId}/images`, {
+      method: 'POST',
+      body: formData,
+      headers: {},
+    }, true),
+};
+
+// ============================================================================
+// ADMIN - ANALYTICS
+// ============================================================================
+
+export interface AdminStats {
+  totalOrders: number;
+  totalRevenue: number;
+  totalCustomers: number;
+  pendingOrders: number;
+  newsletterSubscribers: number;
+  pendingInquiries: number;
+}
+
+export const adminAnalyticsApi = {
+  getStats: () =>
+    apiCall<AdminStats>('/admin/analytics/stats', {}, true),
+};
+
+// ============================================================================
+// CONTACT INQUIRIES
+// ============================================================================
+
+export interface ContactInquiry {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: 'NEW' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateContactInquiryData {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
+export const contactApi = {
+  create: (data: CreateContactInquiryData) =>
+    apiCall<ContactInquiry>('/contact', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getAll: () =>
+    apiCall<ContactInquiry[]>('/admin/contact', {}, true),
+
+  getById: (id: string) =>
+    apiCall<ContactInquiry>(`/admin/contact/${id}`, {}, true),
+
+  updateStatus: (id: string, status: ContactInquiry['status']) =>
+    apiCall<ContactInquiry>(`/admin/contact/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    }, true),
+};
+
+// ============================================================================
 // UTILITIES
 // ============================================================================
 
@@ -709,6 +905,12 @@ export default {
   reviews: reviewsApi,
   discounts: discountsApi,
   tickets: ticketsApi,
+  contact: contactApi,
+  admin: {
+    users: adminUsersApi,
+    products: adminProductsApi,
+    analytics: adminAnalyticsApi,
+  },
   setAuthToken,
   removeAuthToken,
 };

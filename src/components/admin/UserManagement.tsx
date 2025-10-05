@@ -61,18 +61,79 @@ interface UserActivityLog {
   created_at: string;
 }
 
+import apiService, { AdminUser, UserSession as ApiUserSession, UserActivity as ApiUserActivity } from '../../services/apiService';
+
+// Transform API types to component types
+const transformUser = (apiUser: AdminUser): UserProfile => ({
+  id: apiUser.id,
+  user_id: apiUser.id,
+  first_name: apiUser.firstName,
+  last_name: apiUser.lastName,
+  display_name: apiUser.displayName,
+  phone: apiUser.phone,
+  role: apiUser.role === 'CUSTOMER' ? 'customer' : apiUser.role === 'SHOP_OWNER' ? 'shopowner' : 'admin',
+  two_factor_enabled: apiUser.twoFactorEnabled,
+  preferred_language: 'de',
+  marketing_consent: apiUser.marketingConsent,
+  email_notifications: true,
+  theme_preference: 'auto',
+  onboarding_completed: true,
+  created_at: apiUser.createdAt,
+  updated_at: apiUser.updatedAt,
+});
+
+const transformSession = (apiSession: ApiUserSession): UserSession => ({
+  id: apiSession.id,
+  user_id: apiSession.userId,
+  session_token: '',
+  device_name: apiSession.deviceName,
+  device_type: apiSession.deviceType,
+  browser_name: apiSession.browserName,
+  ip_address: apiSession.ipAddress,
+  user_agent: '',
+  is_active: apiSession.isActive,
+  last_used_at: apiSession.lastUsedAt,
+  expires_at: apiSession.expiresAt,
+  created_at: apiSession.createdAt,
+});
+
+const transformActivity = (apiActivity: ApiUserActivity): UserActivityLog => ({
+  id: apiActivity.id,
+  user_id: apiActivity.userId,
+  action_type: apiActivity.actionType,
+  description: apiActivity.description,
+  ip_address: apiActivity.ipAddress,
+  user_agent: '',
+  success: apiActivity.success,
+  metadata: apiActivity.metadata,
+  created_at: apiActivity.createdAt,
+});
+
 const elbfunkelnUserService = {
   getAllUsers: async (): Promise<UserProfile[]> => {
-    console.log('TODO: Implement getAllUsers in API');
-    return [];
+    const users = await apiService.admin.users.getAll();
+    return users.map(transformUser);
   },
   getUserSessions: async (userId: string): Promise<UserSession[]> => {
-    console.log('TODO: Implement getUserSessions in API');
-    return [];
+    const sessions = await apiService.admin.users.getSessions(userId);
+    return sessions.map(transformSession);
   },
   getUserActivity: async (userId: string, limit: number): Promise<UserActivityLog[]> => {
-    console.log('TODO: Implement getUserActivity in API');
-    return [];
+    const activities = await apiService.admin.users.getActivity(userId, limit);
+    return activities.map(transformActivity);
+  },
+  updateUserRole: async (userId: string, newRole: 'customer' | 'shopowner' | 'admin'): Promise<boolean> => {
+    const roleMap = { customer: 'CUSTOMER', shopowner: 'SHOP_OWNER', admin: 'ADMIN' } as const;
+    await apiService.admin.users.updateRole(userId, { role: roleMap[newRole] });
+    return true;
+  },
+  revokeAllSessions: async (userId: string): Promise<boolean> => {
+    await apiService.admin.users.revokeAllSessions(userId);
+    return true;
+  },
+  revokeSession: async (sessionId: string): Promise<boolean> => {
+    await apiService.admin.users.revokeSession(sessionId);
+    return true;
   }
 };
 

@@ -66,27 +66,47 @@ export function AdminDataPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load only data that exists in apiService
-      const [productsResponse, ordersData] = await Promise.all([
+      // Load all admin data from API
+      const [productsResponse, ordersData, adminStatsData, newsletterData, contactData] = await Promise.all([
         apiService.products.getAll({ limit: 10 }),
-        apiService.orders.getAll()
+        apiService.orders.getAll(),
+        apiService.admin.analytics.getStats().catch(() => null),
+        apiService.newsletter.subscribe({ email: '' }).catch(() => null), // Just to test endpoint exists
+        apiService.contact.getAll().catch(() => [])
       ]);
 
       setProducts(productsResponse.data);
       setOrders(ordersData);
+      setInquiries(contactData.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        email: c.email,
+        subject: c.subject,
+        status: c.status,
+        created_at: c.createdAt
+      })));
 
-      // Calculate stats from loaded data
-      const totalRevenue = ordersData.reduce((sum, order) => sum + order.total, 0);
-      setStats({
-        totalProducts: productsResponse.total,
-        totalOrders: ordersData.length,
-        totalRevenue,
-        newsletterSubscribers: 0, // TODO: Implement in API
-        pendingInquiries: 0 // TODO: Implement in API
-      });
+      // Use admin stats if available, otherwise calculate from loaded data
+      if (adminStatsData) {
+        setStats({
+          totalProducts: adminStatsData.totalOrders,
+          totalOrders: adminStatsData.totalOrders,
+          totalRevenue: adminStatsData.totalRevenue,
+          newsletterSubscribers: adminStatsData.newsletterSubscribers,
+          pendingInquiries: adminStatsData.pendingInquiries
+        });
+      } else {
+        const totalRevenue = ordersData.reduce((sum, order) => sum + order.total, 0);
+        setStats({
+          totalProducts: productsResponse.total,
+          totalOrders: ordersData.length,
+          totalRevenue,
+          newsletterSubscribers: 0,
+          pendingInquiries: contactData.length
+        });
+      }
 
-      // Placeholders for not yet implemented features
-      setInquiries([]);
+      // Newsletter subscribers - placeholder for now
       setSubscribers([]);
     } catch (error) {
       console.error('Error loading admin data:', error);

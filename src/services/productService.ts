@@ -9,17 +9,41 @@ const getProducts = async () => {
 };
 
 const createProduct = async (product: any) => {
-  console.log('TODO: Implement createProduct in API');
-  return product;
+  const productData = {
+    name: product.name,
+    description: product.description,
+    price: Number(product.price),
+    discountPrice: product.discountPrice ? Number(product.discountPrice) : undefined,
+    sku: product.sku,
+    stock: Number(product.stock),
+    categoryId: product.categoryId,
+    isActive: product.isActive ?? true,
+    isFeatured: product.isFeatured ?? false,
+    giftboxavailable: product.giftboxavailable ?? false,
+  };
+
+  return await apiService.admin.products.create(productData);
 };
 
 const updateProduct = async (id: string, product: any) => {
-  console.log('TODO: Implement updateProduct in API');
-  return product;
+  const productData = {
+    name: product.name,
+    description: product.description,
+    price: product.price ? Number(product.price) : undefined,
+    discountPrice: product.discountPrice ? Number(product.discountPrice) : undefined,
+    sku: product.sku,
+    stock: product.stock ? Number(product.stock) : undefined,
+    categoryId: product.categoryId,
+    isActive: product.isActive,
+    isFeatured: product.isFeatured,
+    giftboxavailable: product.giftboxavailable,
+  };
+
+  return await apiService.admin.products.update(id, productData);
 };
 
 const deleteProduct = async (id: string) => {
-  console.log('TODO: Implement deleteProduct in API');
+  await apiService.admin.products.delete(id);
   return true;
 };
 
