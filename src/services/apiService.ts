@@ -35,7 +35,7 @@ const createHeaders = (includeAuth: boolean = false): HeadersInit => {
   return headers;
 };
 
-// Helper function for API calls with automatic 401 handling
+// Helper function for API calls with automatic 401/403 handling
 async function apiCall<T>(
   endpoint: string,
   options: RequestInit = {},
@@ -65,6 +65,19 @@ async function apiCall<T>(
 
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.message || 'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.');
+  }
+
+  // Handle 403 Forbidden - No admin rights
+  if (response.status === 403) {
+    console.warn('🚫 403 Forbidden - Insufficient permissions');
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Du hast keine Berechtigung für diese Aktion.');
+  }
+
+  // Handle 400 Bad Request - Validation errors
+  if (response.status === 400) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Ungültige Anfrage.');
   }
 
   if (!response.ok) {
@@ -414,6 +427,86 @@ export const ordersApi = {
 };
 
 // ============================================================================
+// PAYMENTS
+// ============================================================================
+
+export interface CreatePaymentData {
+  orderId: string;
+  amount: number;
+  method: string;
+}
+
+export interface PaymentIntentResponse {
+  order: Order;
+  clientSecret: string;
+  paymentIntentId: string;
+}
+
+export const paymentsApi = {
+  createPaymentIntent: (data: CreatePaymentData) =>
+    apiCall<PaymentIntentResponse>('/payments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, true),
+};
+
+// ============================================================================
+// SHIPPING
+// ============================================================================
+
+export interface ShippingRate {
+  id: string;
+  name: string;
+  price: number;
+  estimatedDays: string;
+}
+
+export interface CreateShippingLabelData {
+  orderId: string;
+  carrier: string;
+}
+
+export const shippingApi = {
+  getRates: (addressId: string, weight?: number) =>
+    apiCall<ShippingRate[]>(`/shipping/rates?addressId=${addressId}${weight ? `&weight=${weight}` : ''}`, {}, true),
+
+  createLabel: (data: CreateShippingLabelData) =>
+    apiCall<{ trackingNumber: string; labelUrl: string; message: string }>('/shipping/label', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, true),
+
+  trackShipment: (trackingNumber: string) =>
+    apiCall<{ status: string; events: any[]; estimatedDelivery?: string }>(`/shipping/track/${trackingNumber}`, {}, true),
+};
+
+// ============================================================================
+// ANALYTICS
+// ============================================================================
+
+export interface AnalyticsStats {
+  totalRevenue: number;
+  totalOrders: number;
+  averageOrderValue: number;
+  topProducts: Array<{
+    productId: string;
+    name: string;
+    sales: number;
+    revenue: number;
+  }>;
+}
+
+export const analyticsApi = {
+  getStats: (startDate?: string, endDate?: string) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const query = params.toString();
+    return apiCall<AnalyticsStats>(`/analytics/stats${query ? `?${query}` : ''}`, {}, true);
+  },
+};
+
+// ============================================================================
 // GIFT CARDS
 // ============================================================================
 
@@ -427,9 +520,31 @@ export interface GiftCard {
   createdAt: string;
 }
 
+export interface GiftCardBalance {
+  code: string;
+  balance: number;
+  isActive: boolean;
+  expiresAt: string | null;
+}
+
+export interface RedeemGiftCardData {
+  code: string;
+  orderId: string;
+  amount: number;
+}
+
 export const giftCardsApi = {
   getByCode: (code: string) =>
     apiCall<GiftCard>(`/gift-cards/${code}`),
+
+  getBalance: (code: string) =>
+    apiCall<GiftCardBalance>(`/gift-cards/balance/${code}`),
+
+  redeem: (data: RedeemGiftCardData) =>
+    apiCall<{ success: boolean; remainingBalance: number; message: string }>('/gift-cards/redeem', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, true),
 };
 
 // ============================================================================
@@ -447,6 +562,19 @@ export interface SubscribeNewsletterData {
   email: string;
 }
 
+export interface SendNewsletterData {
+  subject: string;
+  content: string;
+  htmlContent?: string;
+}
+
+export interface NewsletterResult {
+  total: number;
+  sent: number;
+  failed: number;
+  errors: string[];
+}
+
 export const newsletterApi = {
   subscribe: (data: SubscribeNewsletterData) =>
     apiCall<NewsletterSubscription>('/newsletter/subscribe', {
@@ -458,6 +586,15 @@ export const newsletterApi = {
     apiCall<{ message: string }>(`/newsletter/${encodeURIComponent(email)}`, {
       method: 'DELETE',
     }),
+
+  getAll: () =>
+    apiCall<NewsletterSubscription[]>('/newsletter', {}, true),
+
+  send: (data: SendNewsletterData) =>
+    apiCall<NewsletterResult>('/newsletter/send', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, true),
 };
 
 // ============================================================================
@@ -611,15 +748,39 @@ export interface Discount {
   createdAt: string;
 }
 
-export const discountsApi = {
-  validate: (code: string) =>
-    apiCall<Discount>(`/discounts/validate/${code}`),
+export interface ValidateDiscountData {
+  code: string;
+  orderTotal: number;
+  userId?: string;
+}
 
-  apply: (code: string, orderTotal: number) =>
-    apiCall<{ discount: number; finalTotal: number }>('/discounts/apply', {
+export interface ApplyDiscountData {
+  code: string;
+  orderId: string;
+}
+
+export interface ValidateDiscountResponse {
+  isValid: boolean;
+  discount?: Discount;
+  savings?: number;
+  error?: string;
+}
+
+export const discountsApi = {
+  getByCode: (code: string) =>
+    apiCall<Discount>(`/discounts/${code}`),
+
+  validate: (data: ValidateDiscountData) =>
+    apiCall<ValidateDiscountResponse>('/discounts/validate', {
       method: 'POST',
-      body: JSON.stringify({ code, orderTotal }),
+      body: JSON.stringify(data),
     }),
+
+  apply: (data: ApplyDiscountData) =>
+    apiCall<{ success: boolean; discount: number; finalTotal: number; message: string }>('/discounts/apply', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, true),
 };
 
 // ============================================================================
@@ -898,6 +1059,9 @@ export default {
   categories: categoriesApi,
   cart: cartApi,
   orders: ordersApi,
+  payments: paymentsApi,
+  shipping: shippingApi,
+  analytics: analyticsApi,
   giftCards: giftCardsApi,
   newsletter: newsletterApi,
   addresses: addressesApi,
