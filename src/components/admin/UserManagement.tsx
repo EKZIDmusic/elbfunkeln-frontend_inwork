@@ -9,8 +9,72 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { toast } from 'sonner@2.0.3';
-import { elbfunkelnUserService, UserProfile, UserSession, UserActivityLog } from '../../services/elbfunkelnUserService';
 import { Shield, Users, Activity, Settings, Smartphone, Trash2, Eye, UserCheck, UserX, Clock } from 'lucide-react';
+
+// Placeholder types until API is implemented
+interface UserProfile {
+  id: string;
+  user_id: string;
+  first_name?: string;
+  last_name?: string;
+  display_name?: string;
+  phone?: string;
+  birth_date?: string;
+  role: 'customer' | 'shopowner' | 'admin';
+  two_factor_enabled: boolean;
+  two_factor_secret?: string;
+  backup_codes?: string[];
+  preferred_language: string;
+  marketing_consent: boolean;
+  email_notifications: boolean;
+  avatar_url?: string;
+  theme_preference: 'light' | 'dark' | 'auto';
+  onboarding_completed: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface UserSession {
+  id: string;
+  user_id: string;
+  session_token: string;
+  device_name?: string;
+  device_type?: string;
+  browser_name?: string;
+  ip_address?: string;
+  user_agent?: string;
+  is_active: boolean;
+  last_used_at: string;
+  expires_at: string;
+  created_at: string;
+}
+
+interface UserActivityLog {
+  id: string;
+  user_id: string;
+  action_type: string;
+  description?: string;
+  ip_address?: string;
+  user_agent?: string;
+  success: boolean;
+  metadata?: any;
+  created_at: string;
+}
+
+const elbfunkelnUserService = {
+  getAllUsers: async (): Promise<UserProfile[]> => {
+    console.log('TODO: Implement getAllUsers in API');
+    return [];
+  },
+  getUserSessions: async (userId: string): Promise<UserSession[]> => {
+    console.log('TODO: Implement getUserSessions in API');
+    return [];
+  },
+  getUserActivity: async (userId: string, limit: number): Promise<UserActivityLog[]> => {
+    console.log('TODO: Implement getUserActivity in API');
+    return [];
+  }
+};
 
 export function UserManagement() {
   const [users, setUsers] = useState<UserProfile[]>([]);

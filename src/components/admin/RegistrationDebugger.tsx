@@ -9,15 +9,12 @@ import { Alert, AlertDescription } from '../ui/alert';
 import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
 import { useAuth } from '../AuthContext';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
-import { createClient } from '@supabase/supabase-js';
 
-const API_BASE_URL = `https://${projectId}.supabase.co/functions/v1/make-server-0a65d7a9`;
+// TODO: Implement registration debugging in new MariaDB API
+const API_BASE_URL = ''; // Disabled - not implemented in new API
 
-const supabase = createClient(
-  `https://${projectId}.supabase.co`,
-  publicAnonKey
-);
+// Supabase client removed - using new API instead
+const supabase: any = null;
 
 export function RegistrationDebugger() {
   const { register } = useAuth();

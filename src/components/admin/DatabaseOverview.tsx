@@ -5,7 +5,9 @@ import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Database, Users, ShoppingCart, Mail, MessageSquare, Activity, Settings, BarChart3 } from 'lucide-react';
-import { supabase } from '../../utils/supabase/client';
+
+// TODO: Implement database overview in new MariaDB API
+// This component is currently disabled as it relied on Supabase direct queries
 
 interface TableInfo {
   table_name: string;
@@ -46,38 +48,11 @@ export function DatabaseOverview() {
   const loadDatabaseStats = async () => {
     setLoading(true);
     try {
-      // Core tables that should always work
-      const coreTables = [
-        'categories', 'products', 'product_images', 
-        'newsletter_subscribers', 'contact_inquiries'
-      ];
+      // Database overview not yet implemented in new API
+      // Using placeholder data for now
+      console.log('TODO: Implement database overview in API');
 
-      // Optional tables that might not exist
-      const optionalTables = [
-        'user_profiles', 'user_sessions', 'user_activity_log', 
-        'user_addresses', 'orders', 'order_items', 'kv_store_0a65d7a9'
-      ];
-
-      const allTables = [...coreTables, ...optionalTables];
-
-      const tablePromises = allTables.map(async (table) => {
-        try {
-          const { count, error } = await supabase
-            .from(table)
-            .select('*', { count: 'exact', head: true });
-          
-          if (error) {
-            console.warn(`Table ${table} not accessible:`, error.message);
-            return { table_name: table, row_count: 0, accessible: false };
-          }
-          return { table_name: table, row_count: count || 0, accessible: true };
-        } catch (err) {
-          console.warn(`Error with table ${table}:`, err);
-          return { table_name: table, row_count: 0, accessible: false };
-        }
-      });
-
-      const tableResults = await Promise.all(tablePromises);
+      const tableResults: any[] = [];
       const accessibleTables = tableResults.filter(t => t.accessible);
       setTableData(accessibleTables);
 

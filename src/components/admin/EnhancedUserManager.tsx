@@ -83,7 +83,8 @@ interface SecurityLog {
   created_at: string;
 }
 
-const API_BASE_URL = `https://${projectId}.supabase.co/functions/v1/make-server-0a65d7a9`;
+// TODO: Implement user management in new MariaDB API
+const API_BASE_URL = ''; // Disabled - not implemented in new API
 
 export function EnhancedUserManager() {
   const { accessToken, user: currentUser } = useAuth();
