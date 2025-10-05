@@ -15,8 +15,8 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  const { login } = useAuth();
+
+  const { login, user } = useAuth();
   const { navigateTo } = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,16 +28,29 @@ export function LoginPage() {
       const success = await login(email, password);
       if (success) {
         setError('✅ Anmeldung erfolgreich! Du wirst weitergeleitet...');
-        
-        // Small delay to show success message
+
+        // Small delay to show success message, then redirect based on user role
         setTimeout(() => {
-          // Check user role and redirect accordingly
-          if (email === 'admin@elbfunkeln.de') {
-            navigateTo('admin-dashboard');
-          } else if (email === 'owner@elbfunkeln.de') {
-            navigateTo('admin');
+          // Get user from localStorage (user state might not be updated yet)
+          const storedUser = localStorage.getItem('elbfunkeln_user');
+          if (storedUser) {
+            try {
+              const userData = JSON.parse(storedUser);
+
+              // Redirect based on user role from API
+              if (userData.role === 'ADMIN') {
+                navigateTo('admin-dashboard');
+              } else if (userData.role === 'SHOP_OWNER') {
+                navigateTo('admin');
+              } else {
+                navigateTo('account');
+              }
+            } catch (parseError) {
+              console.error('Error parsing user data:', parseError);
+              navigateTo('account'); // Default fallback
+            }
           } else {
-            navigateTo('account');
+            navigateTo('account'); // Default fallback
           }
         }, 1000);
       } else {
