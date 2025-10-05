@@ -1,49 +1,44 @@
-import { createClient } from '@supabase/supabase-js';
-import { projectId, publicAnonKey } from './info';
+/**
+ * DEPRECATED: Supabase is no longer used.
+ * This file is kept for backwards compatibility with old admin components.
+ * All new code should use apiService instead.
+ */
 
-// Single Supabase client instance - prevent multiple GoTrueClient instances
-const supabaseUrl = `https://${projectId}.supabase.co`;
-
-// Unique key for this specific application
-const ELBFUNKELN_CLIENT_KEY = '__elbfunkeln_supabase_singleton';
-
-// Create a truly global singleton that persists across hot reloads
-function createSupabaseClient() {
-  // Check if instance already exists globally
-  if (typeof globalThis !== 'undefined' && (globalThis as any)[ELBFUNKELN_CLIENT_KEY]) {
-    console.log('♻️ Reusing existing global Supabase client instance');
-    return (globalThis as any)[ELBFUNKELN_CLIENT_KEY];
-  }
-
-  // Create new instance with unique storage key
-  const client = createClient(supabaseUrl, publicAnonKey, {
-    auth: {
-      persistSession: true,
-      storageKey: 'elbfunkeln-auth-session',
-      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-      detectSessionInUrl: true,
-      flowType: 'pkce',
-      autoRefreshToken: true
-    },
-    global: {
-      headers: {
-        'x-application-name': 'elbfunkeln-webapp',
-        'x-client-version': '1.0.0'
+// Mock Supabase client that throws helpful errors
+const createMockClient = () => {
+  const mockClient: any = {
+    from: (table: string) => ({
+      select: () => {
+        console.error(`❌ Supabase client is deprecated. Use apiService instead. Attempted to access table: ${table}`);
+        return Promise.resolve({ data: null, error: { message: 'Supabase is no longer used. Please use the new API service.' }, count: 0 });
+      },
+      insert: () => {
+        console.error('❌ Supabase client is deprecated. Use apiService instead.');
+        return Promise.resolve({ data: null, error: { message: 'Supabase is no longer used. Please use the new API service.' } });
+      },
+      update: () => {
+        console.error('❌ Supabase client is deprecated. Use apiService instead.');
+        return Promise.resolve({ data: null, error: { message: 'Supabase is no longer used. Please use the new API service.' } });
+      },
+      delete: () => {
+        console.error('❌ Supabase client is deprecated. Use apiService instead.');
+        return Promise.resolve({ data: null, error: { message: 'Supabase is no longer used. Please use the new API service.' } });
       }
+    }),
+    auth: {
+      signUp: () => Promise.resolve({ data: null, error: { message: 'Use apiService.auth.register instead' } }),
+      signIn: () => Promise.resolve({ data: null, error: { message: 'Use apiService.auth.login instead' } }),
+      signOut: () => Promise.resolve({ error: null }),
+      getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+      getUser: () => Promise.resolve({ data: { user: null }, error: null })
     }
-  });
+  };
 
-  // Store globally to prevent multiple instances
-  if (typeof globalThis !== 'undefined') {
-    (globalThis as any)[ELBFUNKELN_CLIENT_KEY] = client;
-  }
+  return mockClient;
+};
 
-  console.log('🔄 Created new Supabase client instance');
-  return client;
-}
-
-// Export the singleton instance
-export const supabase = createSupabaseClient();
+// Export the mock client
+export const supabase = createMockClient();
 
 // For backwards compatibility
 export function getSupabaseClient() {

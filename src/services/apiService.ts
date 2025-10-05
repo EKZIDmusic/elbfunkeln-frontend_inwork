@@ -1,6 +1,7 @@
 /**
  * Elbfunkeln API Service
- * Zentrale API-Kommunikation mit http://api.elbfunkeln.de/api
+ * Zentrale API-Kommunikation mit https://api.elbfunkeln.de/api
+ * MariaDB Backend via NestJS + Prisma
  */
 
 const API_BASE_URL = 'https://api.elbfunkeln.de/api';
@@ -452,11 +453,230 @@ export const newsletterApi = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  
+
   unsubscribe: (email: string) =>
     apiCall<{ message: string }>(`/newsletter/${encodeURIComponent(email)}`, {
       method: 'DELETE',
     }),
+};
+
+// ============================================================================
+// ADDRESSES
+// ============================================================================
+
+export interface Address {
+  id: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  street: string;
+  houseNumber: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAddressData {
+  firstName: string;
+  lastName: string;
+  street: string;
+  houseNumber: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  isDefault?: boolean;
+}
+
+export const addressesApi = {
+  getAll: () =>
+    apiCall<Address[]>('/addresses', {}, true),
+
+  getById: (id: string) =>
+    apiCall<Address>(`/addresses/${id}`, {}, true),
+
+  create: (data: CreateAddressData) =>
+    apiCall<Address>('/addresses', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, true),
+
+  update: (id: string, data: Partial<CreateAddressData>) =>
+    apiCall<Address>(`/addresses/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, true),
+
+  delete: (id: string) =>
+    apiCall<{ message: string }>(`/addresses/${id}`, {
+      method: 'DELETE',
+    }, true),
+
+  setDefault: (id: string) =>
+    apiCall<Address>(`/addresses/${id}/default`, {
+      method: 'PUT',
+    }, true),
+};
+
+// ============================================================================
+// FAVORITES
+// ============================================================================
+
+export interface Favorite {
+  id: string;
+  userId: string;
+  productId: string;
+  product: Product;
+  createdAt: string;
+}
+
+export const favoritesApi = {
+  getAll: () =>
+    apiCall<Favorite[]>('/favorites', {}, true),
+
+  add: (productId: string) =>
+    apiCall<Favorite>('/favorites', {
+      method: 'POST',
+      body: JSON.stringify({ productId }),
+    }, true),
+
+  remove: (productId: string) =>
+    apiCall<{ message: string }>(`/favorites/${productId}`, {
+      method: 'DELETE',
+    }, true),
+
+  check: (productId: string) =>
+    apiCall<{ isFavorite: boolean }>(`/favorites/check/${productId}`, {}, true),
+};
+
+// ============================================================================
+// REVIEWS
+// ============================================================================
+
+export interface Review {
+  id: string;
+  productId: string;
+  userId: string;
+  rating: number;
+  comment: string;
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateReviewData {
+  productId: string;
+  rating: number;
+  comment: string;
+}
+
+export const reviewsApi = {
+  getByProduct: (productId: string) =>
+    apiCall<Review[]>(`/reviews/product/${productId}`),
+
+  create: (data: CreateReviewData) =>
+    apiCall<Review>('/reviews', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, true),
+
+  update: (id: string, data: Partial<CreateReviewData>) =>
+    apiCall<Review>(`/reviews/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, true),
+
+  delete: (id: string) =>
+    apiCall<{ message: string }>(`/reviews/${id}`, {
+      method: 'DELETE',
+    }, true),
+};
+
+// ============================================================================
+// DISCOUNTS
+// ============================================================================
+
+export interface Discount {
+  id: string;
+  code: string;
+  type: 'PERCENTAGE' | 'FIXED';
+  value: number;
+  minOrderValue: number | null;
+  maxUses: number | null;
+  usedCount: number;
+  isActive: boolean;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+export const discountsApi = {
+  validate: (code: string) =>
+    apiCall<Discount>(`/discounts/validate/${code}`),
+
+  apply: (code: string, orderTotal: number) =>
+    apiCall<{ discount: number; finalTotal: number }>('/discounts/apply', {
+      method: 'POST',
+      body: JSON.stringify({ code, orderTotal }),
+    }),
+};
+
+// ============================================================================
+// TICKETS (Support)
+// ============================================================================
+
+export interface Ticket {
+  id: string;
+  userId: string;
+  subject: string;
+  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TicketMessage {
+  id: string;
+  ticketId: string;
+  userId: string;
+  message: string;
+  isStaff: boolean;
+  createdAt: string;
+}
+
+export interface CreateTicketData {
+  subject: string;
+  message: string;
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+}
+
+export const ticketsApi = {
+  getAll: () =>
+    apiCall<Ticket[]>('/tickets', {}, true),
+
+  getById: (id: string) =>
+    apiCall<Ticket>(`/tickets/${id}`, {}, true),
+
+  create: (data: CreateTicketData) =>
+    apiCall<Ticket>('/tickets', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, true),
+
+  addMessage: (ticketId: string, message: string) =>
+    apiCall<TicketMessage>(`/tickets/${ticketId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    }, true),
+
+  getMessages: (ticketId: string) =>
+    apiCall<TicketMessage[]>(`/tickets/${ticketId}/messages`, {}, true),
+
+  close: (id: string) =>
+    apiCall<Ticket>(`/tickets/${id}/close`, {
+      method: 'PUT',
+    }, true),
 };
 
 // ============================================================================
@@ -484,6 +704,11 @@ export default {
   orders: ordersApi,
   giftCards: giftCardsApi,
   newsletter: newsletterApi,
+  addresses: addressesApi,
+  favorites: favoritesApi,
+  reviews: reviewsApi,
+  discounts: discountsApi,
+  tickets: ticketsApi,
   setAuthToken,
   removeAuthToken,
 };
