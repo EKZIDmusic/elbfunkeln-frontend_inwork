@@ -11,7 +11,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Separator } from '../ui/separator';
 import { toast } from 'sonner@2.0.3';
-import apiService, { Product } from '../../services/apiService';
+import apiService, { Product, Category } from '../../services/apiService';
 import { validateProductForeignKeys } from '../../utils/validation';
 
 // API wrapper functions
@@ -151,6 +151,7 @@ const attributeTemplates = {
 
 export function EnhancedProductManager() {
   const [products, setProducts] = useState<EnhancedProduct[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<EnhancedProduct | null>(null);
   const [isCreateMode, setIsCreateMode] = useState(false);
@@ -179,13 +180,24 @@ export function EnhancedProductManager() {
 
   useEffect(() => {
     loadProducts();
+    loadCategories();
   }, []);
+
+  const loadCategories = async () => {
+    try {
+      const loadedCategories = await apiService.categories.getAll();
+      setCategories(loadedCategories);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      toast.error('Fehler beim Laden der Kategorien');
+    }
+  };
 
   const loadProducts = async () => {
     try {
       setLoading(true);
       const basicProducts = await getProducts();
-      
+
       // Konvertiere zu EnhancedProduct Format (mit Fallback-Werten)
       const enhancedProducts: EnhancedProduct[] = basicProducts.map(product => ({
         ...product,
@@ -201,7 +213,7 @@ export function EnhancedProductManager() {
         // Lade erweiterte Daten aus localStorage falls verfügbar
         ...getStoredProductEnhancements(product.id)
       }));
-      
+
       setProducts(enhancedProducts);
     } catch (error) {
       console.error('Error loading products:', error);
@@ -308,7 +320,9 @@ export function EnhancedProductManager() {
   };
 
   const handleEditProduct = (product: EnhancedProduct) => {
-    setFormData(product);
+    // Setze categoryId als UUID, nicht als Objekt
+    const categoryId = typeof product.category === 'object' ? product.category.id : product.categoryId;
+    setFormData({ ...product, category: categoryId } as any);
     setEditingProduct(product);
     setIsCreateMode(false);
   };
@@ -406,13 +420,12 @@ export function EnhancedProductManager() {
   };
 
   const filteredProducts = products.filter(product => {
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+    const categoryId = typeof product.category === 'object' ? product.category.id : product.categoryId;
+    const matchesCategory = selectedCategory === 'all' || categoryId === selectedCategory;
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
-
-  const categories = Array.from(new Set(products.map(p => typeof p.category === 'object' ? p.category.name : p.category)));
 
   if (loading) {
     return (
@@ -454,7 +467,7 @@ export function EnhancedProductManager() {
           <SelectContent>
             <SelectItem value="all">Alle Kategorien</SelectItem>
             {categories.map(category => (
-              <SelectItem key={category} value={category}>{category}</SelectItem>
+              <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -580,11 +593,9 @@ export function EnhancedProductManager() {
                       <SelectValue placeholder="Kategorie wählen" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Ohrringe">Ohrringe</SelectItem>
-                      <SelectItem value="Ringe">Ringe</SelectItem>
-                      <SelectItem value="Ketten">Ketten</SelectItem>
-                      <SelectItem value="Armbänder">Armbänder</SelectItem>
-                      <SelectItem value="Sets">Sets</SelectItem>
+                      {categories.map(category => (
+                        <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
