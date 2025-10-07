@@ -62,20 +62,20 @@ export function Header() {
                 {item.label}
               </button>
             ))}
+            {(isShopOwner() || isAdmin()) && (
+              <button
+                onClick={() => navigateTo('admin')}
+                className="font-inter text-elbfunkeln-green hover:text-elbfunkeln-green/80 transition-colors duration-200 hover:scale-105 active:scale-95"
+              >
+                👩‍💼 Shop-Verwaltung
+              </button>
+            )}
             {isAdmin() && (
               <button
                 onClick={() => navigateTo('admin-data')}
                 className="font-inter text-elbfunkeln-green hover:text-elbfunkeln-green/80 transition-colors duration-200 hover:scale-105 active:scale-95"
               >
                 🗄️ Daten
-              </button>
-            )}
-            {isShopOwner() && (
-              <button
-                onClick={() => navigateTo('admin')}
-                className="font-inter text-elbfunkeln-green hover:text-elbfunkeln-green/80 transition-colors duration-200 hover:scale-105 active:scale-95"
-              >
-                👩‍💼 Shop-Verwaltung
               </button>
             )}
           </nav>
@@ -209,6 +209,28 @@ export function Header() {
                   >
                     👤 Mein Konto
                   </button>
+                  {(isShopOwner() || isAdmin()) && (
+                    <button
+                      onClick={() => {
+                        navigateTo('admin');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="block py-2 font-inter text-elbfunkeln-green text-left w-full hover:text-elbfunkeln-green/80 hover:bg-elbfunkeln-green/5 transition-colors duration-200"
+                    >
+                      👩‍💼 Shop-Verwaltung
+                    </button>
+                  )}
+                  {isAdmin() && (
+                    <button
+                      onClick={() => {
+                        navigateTo('admin-data');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="block py-2 font-inter text-elbfunkeln-green text-left w-full hover:text-elbfunkeln-green/80 hover:bg-elbfunkeln-green/5 transition-colors duration-200"
+                    >
+                      🗄️ Daten
+                    </button>
+                  )}
                   <button
                     onClick={async () => {
                       try {
