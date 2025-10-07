@@ -195,6 +195,8 @@ export interface Product {
   category: Category;
   images: ProductImage[];
   reviews: ProductReview[];
+  isDeleted?: boolean;
+  deletedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -965,6 +967,22 @@ export const adminProductsApi = {
 
   delete: (id: string) =>
     apiCall<{ message: string }>(`/admin/products/${id}`, {
+      method: 'DELETE',
+    }, true),
+
+  // Archiv-Funktionen (Soft-Delete)
+  getArchived: async () => {
+    const products = await apiCall<Product[]>('/admin/products/archived', {}, true);
+    return products.map(transformProduct);
+  },
+
+  restore: (id: string) =>
+    apiCall<Product>(`/admin/products/${id}/restore`, {
+      method: 'POST',
+    }, true),
+
+  permanentDelete: (id: string) =>
+    apiCall<{ message: string }>(`/admin/products/${id}/permanent`, {
       method: 'DELETE',
     }, true),
 
