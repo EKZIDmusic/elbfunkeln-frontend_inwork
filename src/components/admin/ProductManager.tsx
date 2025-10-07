@@ -17,6 +17,7 @@ import { Textarea } from '../ui/textarea';
 import { useAuth } from '../AuthContext';
 import apiService, { Product } from '../../services/apiService';
 import { toast } from 'sonner@2.0.3';
+import { validateProductForeignKeys, isValidUUID } from '../../utils/validation';
 
 // API wrapper functions
 const getProducts = async () => {
@@ -31,12 +32,15 @@ const createProduct = async (product: any) => {
     price: product.price,
     sku: product.sku || `SKU-${Date.now()}`,
     stock: product.stock,
-    categoryId: product.categoryId || product.category,
+    categoryId: product.categoryId,
     isActive: product.status === 'active',
     discountPrice: product.discountPrice,
     isFeatured: product.isFeatured || false,
     giftboxavailable: product.giftboxavailable || false
   };
+
+  // Validate foreign keys before sending to API
+  validateProductForeignKeys(productData);
 
   return await apiService.admin.products.create(productData);
 };
@@ -47,12 +51,15 @@ const updateProduct = async (id: string, product: any) => {
     description: product.description,
     price: product.price,
     stock: product.stock,
-    categoryId: product.categoryId || product.category,
+    categoryId: product.categoryId,
     isActive: product.status === 'active',
     discountPrice: product.discountPrice,
     isFeatured: product.isFeatured,
     giftboxavailable: product.giftboxavailable
   };
+
+  // Validate foreign keys before sending to API
+  validateProductForeignKeys(productData);
 
   return await apiService.admin.products.update(id, productData);
 };
@@ -84,26 +91,37 @@ export function ProductManager() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+
   // Product Form
   const [productForm, setProductForm] = useState<ProductFormData>({
     name: '',
     description: '',
     price: 0,
     image_url: '',
-    category: 'Ohrringe',
+    category: '',
     stock: 0, // Standard: 0 statt 1, damit neue Produkte auf der Website sichtbar sind
     status: 'active'
   });
-
-  const categories = ['Ohrringe', 'Ringe', 'Armbänder', 'Ketten', 'Anhänger'];
 
   // Load data on mount
   useEffect(() => {
     if (accessToken) {
       loadData();
+      loadCategories();
     }
   }, [accessToken]);
+
+  const loadCategories = async () => {
+    try {
+      const categoriesData = await apiService.categories.getAll();
+      setCategories(categoriesData.map(cat => ({ id: cat.id, name: cat.name })));
+      console.log('✅ Kategorien erfolgreich geladen:', categoriesData.length);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      toast.error('Fehler beim Laden der Kategorien');
+    }
+  };
 
   const loadData = async () => {
     if (!accessToken) {
@@ -113,12 +131,12 @@ export function ProductManager() {
 
     try {
       setLoading(true);
-      
+
       console.log('🔧 Loading products with Supabase service...');
-      
+
       const productsData = await getProducts();
       setProducts(productsData || []);
-      
+
       console.log('✅ Produkte erfolgreich geladen:', productsData?.length, 'Produkte');
       toast.success('Produkte erfolgreich geladen');
     } catch (error) {
@@ -131,13 +149,14 @@ export function ProductManager() {
 
   // Filter products
   const filteredProducts = products.filter(product => {
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch = searchQuery === '' ||
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+
+    const productCategoryName = typeof product.category === 'object' ? product.category.name : product.category;
+    const matchesCategory = selectedCategory === 'all' || productCategoryName === selectedCategory || product.categoryId === selectedCategory;
     const matchesStatus = selectedStatus === 'all' || product.status === selectedStatus;
-    
+
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
@@ -148,10 +167,20 @@ export function ProductManager() {
       return;
     }
 
+    if (!productForm.category) {
+      toast.error('Bitte wählen Sie eine Kategorie aus');
+      return;
+    }
+
+    if (!isValidUUID(productForm.category)) {
+      toast.error('Ungültige Kategorie-ID. Bitte wählen Sie eine gültige Kategorie aus der Liste.');
+      return;
+    }
+
     try {
       setLoading(true);
-      
-      const newProduct = await createProduct(productForm);
+
+      const newProduct = await createProduct({ ...productForm, categoryId: productForm.category });
       setProducts([newProduct, ...products]);
       
       // Reset form
@@ -160,7 +189,7 @@ export function ProductManager() {
         description: '',
         price: 0,
         image_url: '',
-        category: 'Ohrringe',
+        category: '',
         stock: 0,
         status: 'active'
       });
@@ -181,10 +210,20 @@ export function ProductManager() {
       return;
     }
 
+    if (!productForm.category) {
+      toast.error('Bitte wählen Sie eine Kategorie aus');
+      return;
+    }
+
+    if (!isValidUUID(productForm.category)) {
+      toast.error('Ungültige Kategorie-ID. Bitte wählen Sie eine gültige Kategorie aus der Liste.');
+      return;
+    }
+
     try {
       setLoading(true);
-      
-      const updatedProduct = await updateProduct(editingProduct.id, productForm);
+
+      const updatedProduct = await updateProduct(editingProduct.id, { ...productForm, categoryId: productForm.category });
       setProducts(products.map(p => p.id === editingProduct.id ? updatedProduct : p));
       
       setShowEditDialog(false);
@@ -224,7 +263,7 @@ export function ProductManager() {
       care_instructions: product.care_instructions,
       price: product.price,
       image_url: product.image_url,
-      category: product.category,
+      category: product.categoryId, // Use categoryId (UUID) instead of category object/name
       stock: product.stock,
       status: product.status
     });
@@ -324,7 +363,7 @@ export function ProductManager() {
             <SelectContent>
               <SelectItem value="all">Alle Kategorien</SelectItem>
               {categories.map(cat => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -382,11 +421,11 @@ export function ProductManager() {
                     <Label htmlFor="category">Kategorie</Label>
                     <Select value={productForm.category} onValueChange={(value) => setProductForm({ ...productForm, category: value })}>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Kategorie wählen" />
                       </SelectTrigger>
                       <SelectContent>
                         {categories.map(cat => (
-                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                          <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -608,11 +647,11 @@ export function ProductManager() {
                 <Label htmlFor="edit-category">Kategorie</Label>
                 <Select value={productForm.category} onValueChange={(value) => setProductForm({ ...productForm, category: value })}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Kategorie wählen" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

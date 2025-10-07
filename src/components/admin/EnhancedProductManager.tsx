@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Separator } from '../ui/separator';
 import { toast } from 'sonner@2.0.3';
 import apiService, { Product } from '../../services/apiService';
+import { validateProductForeignKeys } from '../../utils/validation';
 
 // API wrapper functions
 const getProducts = async () => {
@@ -26,12 +27,15 @@ const createProduct = async (product: any) => {
     price: product.price,
     sku: product.sku || `SKU-${Date.now()}`,
     stock: product.stock,
-    categoryId: product.categoryId || product.category,
+    categoryId: product.categoryId,
     isActive: product.status === 'active',
     discountPrice: product.discountPrice || product.salePrice,
     isFeatured: product.isFeatured || false,
     giftboxavailable: product.giftWrappingAvailable || product.giftboxavailable || false
   };
+
+  // Validate foreign keys before sending to API
+  validateProductForeignKeys(productData);
 
   return await apiService.admin.products.create(productData);
 };
@@ -42,12 +46,15 @@ const updateProduct = async (id: string, product: any) => {
     description: product.description,
     price: product.price,
     stock: product.stock,
-    categoryId: product.categoryId || product.category,
+    categoryId: product.categoryId,
     isActive: product.status === 'active',
     discountPrice: product.discountPrice || product.salePrice,
     isFeatured: product.isFeatured,
     giftboxavailable: product.giftWrappingAvailable || product.giftboxavailable
   };
+
+  // Validate foreign keys before sending to API
+  validateProductForeignKeys(productData);
 
   return await apiService.admin.products.update(id, productData);
 };
@@ -233,7 +240,7 @@ export function EnhancedProductManager() {
         description: formData.description || '',
         price: formData.price!,
         image_url: formData.image_url || '',
-        category: formData.category!,
+        categoryId: formData.category!,
         stock: formData.stock || 0,
         status: formData.status as 'active' | 'inactive'
       };
