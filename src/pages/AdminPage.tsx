@@ -283,6 +283,7 @@ function AdminOverview() {
 
 export function AdminPage() {
   const [currentView, setCurrentView] = useState('overview');
+  const [showEnhancedProducts, setShowEnhancedProducts] = useState(false);
 
   const navigationItems = [
     {
