@@ -93,6 +93,11 @@ const transformProduct = (product: any): Product => ({
   ...product,
   price: Number(product.price),
   discountPrice: product.discountPrice ? Number(product.discountPrice) : null,
+  // Map legacy fields for compatibility
+  status: product.isActive ? 'active' : 'inactive',
+  image_url: product.images?.[0]?.url || product.image_url || '',
+  created_at: product.createdAt || product.created_at,
+  updated_at: product.updatedAt || product.updated_at,
 });
 
 const transformOrderItem = (item: any): OrderItem => ({
@@ -184,6 +189,8 @@ export interface Product {
   id: string;
   name: string;
   description: string;
+  detailed_description?: string;
+  care_instructions?: string;
   price: number;
   discountPrice?: number | null;
   sku: string;
@@ -192,13 +199,18 @@ export interface Product {
   isFeatured: boolean;
   giftboxavailable: boolean;
   categoryId: string;
-  category: Category;
+  category: Category | string; // Support both Category object and string
   images: ProductImage[];
   reviews: ProductReview[];
   isDeleted?: boolean;
   deletedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  // Legacy/compatibility fields
+  image_url?: string;
+  status?: 'active' | 'inactive';
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ProductsResponse {
