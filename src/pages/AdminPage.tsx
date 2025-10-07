@@ -22,6 +22,7 @@ import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { ProductManager } from '../components/admin/ProductManager';
 import { EnhancedProductManager } from '../components/admin/EnhancedProductManager';
+import { ProductManagerWithArchive } from '../components/admin/ProductManagerWithArchive';
 import { ProductContentManager } from '../components/admin/ProductContentManager';
 import { AnalyticsManager } from '../components/admin/AnalyticsManager';
 import { NewsletterManager } from '../components/admin/NewsletterManager';
@@ -282,7 +283,6 @@ function AdminOverview() {
 
 export function AdminPage() {
   const [currentView, setCurrentView] = useState('overview');
-  const [showEnhancedProducts, setShowEnhancedProducts] = useState(false);
 
   const navigationItems = [
     {
@@ -342,7 +342,7 @@ export function AdminPage() {
       case 'overview':
         return <AdminOverview />;
       case 'products':
-        return showEnhancedProducts ? <EnhancedProductManager /> : <ProductManager />;
+        return <ProductManagerWithArchive />;
       case 'content':
         return <ProductContentManager />;
       case 'orders':
