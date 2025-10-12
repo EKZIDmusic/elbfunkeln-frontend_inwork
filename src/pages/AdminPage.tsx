@@ -343,7 +343,7 @@ export function AdminPage() {
       case 'overview':
         return <AdminOverview />;
       case 'products':
-        return <ProductManagerWithArchive />;
+        return showEnhancedProducts ? <EnhancedProductManager /> : <ProductManagerWithArchive />;
       case 'content':
         return <ProductContentManager />;
       case 'orders':
