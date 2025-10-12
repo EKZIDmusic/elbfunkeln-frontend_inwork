@@ -168,20 +168,30 @@ function getStoredProductEnhancements(productId: string): any {
 // Konvertiert Supabase-Produkt zu Website-Produkt
 function convertToWebsiteProduct(supabaseProduct: SupabaseProduct): WebsiteProduct {
   const isNew = new Date(supabaseProduct.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // Neue Produkte = letzten 30 Tage
-  
+
   // Lade erweiterte Attribute aus localStorage
   const enhancements = getStoredProductEnhancements(supabaseProduct.id);
-  
+
   // Bestimme isSale basierend auf salePrice oder expliziter Markierung
   const isSale = enhancements.isSale || (enhancements.salePrice && enhancements.salePrice < supabaseProduct.price);
-  
+
+  // Bilder: Verwende enhancements.images falls vorhanden, sonst supabaseProduct.images, sonst Fallback
+  const productImages = enhancements.images && enhancements.images.length > 0
+    ? enhancements.images.map((img: any) => img.url)
+    : supabaseProduct.images && supabaseProduct.images.length > 0
+    ? supabaseProduct.images.map(img => img.url)
+    : [supabaseProduct.image_url];
+
+  // Hauptbild: Erstes Bild aus dem Array
+  const primaryImage = productImages[0] || supabaseProduct.image_url;
+
   return {
     id: supabaseProduct.id,
     name: supabaseProduct.name,
     price: supabaseProduct.price,
     originalPrice: isSale ? supabaseProduct.price : undefined,
-    image: supabaseProduct.image_url,
-    images: [supabaseProduct.image_url], // Fallback zu einem Bild
+    image: primaryImage,
+    images: productImages,
     category: supabaseProduct.category,
     description: supabaseProduct.description,
     detailed_description: supabaseProduct.detailed_description || enhancements.detailed_description,
@@ -192,7 +202,7 @@ function convertToWebsiteProduct(supabaseProduct: SupabaseProduct): WebsiteProdu
     materials: enhancements.materials || ['Handgefertigter Draht'], // Default-Material
     dimensions: enhancements.dimensions || 'Individuelle Größe',
     // Supabase-spezifisch
-    image_url: supabaseProduct.image_url,
+    image_url: primaryImage,
     stock: supabaseProduct.stock,
     status: supabaseProduct.status,
     created_at: supabaseProduct.created_at,

@@ -1,20 +1,19 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
 import { ArrowLeft, Heart, ShoppingBag, Share2, Truck, Shield, RotateCcw, Star, Gift } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Card } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { ProductImageGallery } from '../components/ProductImageGallery';
 import { useRouter } from '../components/Router';
 import { useCart } from '../components/CartContext';
 import apiService, { Product } from '../services/apiService';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 export function ProductDetailPage() {
   const { productId, navigateTo } = useRouter();
   const { addToCart, toggleFavorite, isFavorite } = useCart();
   const [quantity, setQuantity] = useState(1);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [includeGiftBox, setIncludeGiftBox] = useState(false);
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -136,42 +135,15 @@ export function ProductDetailPage() {
 
         {/* Product Details */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {/* Images */}
-          <div className="space-y-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="aspect-square rounded-lg overflow-hidden bg-white"
-            >
-              <img
-                src={product.images[selectedImageIndex]?.url || ''}
-                alt={product.images[selectedImageIndex]?.alt || product.name}
-                className="w-full h-full object-cover"
-              />
-            </motion.div>
-            
-            {/* Image Thumbnails */}
-            {product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {product.images.map((image, index) => (
-                  <button
-                    key={image.id}
-                    onClick={() => setSelectedImageIndex(index)}
-                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                      selectedImageIndex === index
-                        ? 'border-elbfunkeln-rose'
-                        : 'border-transparent hover:border-elbfunkeln-green/30'
-                    }`}
-                  >
-                    <img
-                      src={image.url}
-                      alt={image.alt || `${product.name} ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
+          {/* Images Gallery */}
+          <div>
+            <ProductImageGallery
+              images={product.images.map(img => img.url)}
+              productName={product.name}
+              isNew={product.isFeatured}
+              isSale={!!product.discountPrice}
+              inStock={product.stock > 0}
+            />
           </div>
 
           {/* Product Info */}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Settings, Save, X, Palette, Ruler, Circle } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Input } from '../ui/input';
@@ -8,9 +8,9 @@ import { Label } from '../ui/label';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Checkbox } from '../ui/checkbox';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Separator } from '../ui/separator';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import apiService, { Product, Category } from '../../services/apiService';
 import { validateProductForeignKeys } from '../../utils/validation';
 
@@ -167,6 +167,7 @@ export function EnhancedProductManager() {
     category: '',
     stock: 0,
     status: 'active',
+    images: [],
     customAttributes: [],
     materials: [],
     colors: [],
@@ -269,8 +270,9 @@ export function EnhancedProductManager() {
         return;
       }
 
-      // Speichere erweiterte Daten separat
+      // Speichere erweiterte Daten separat (inkl. Bilder)
       const enhancements = {
+        images: formData.images || [],
         customAttributes: formData.customAttributes || [],
         materials: formData.materials || [],
         colors: formData.colors || [],
@@ -298,6 +300,7 @@ export function EnhancedProductManager() {
         category: '',
         stock: 0,
         status: 'active',
+        images: [],
         customAttributes: [],
         materials: [],
         colors: [],
@@ -336,6 +339,7 @@ export function EnhancedProductManager() {
       category: '',
       stock: 0,
       status: 'active',
+      images: [],
       customAttributes: [],
       materials: [],
       colors: [],
@@ -479,7 +483,7 @@ export function EnhancedProductManager() {
           <Card key={product.id} className="p-4 border-0 bg-gradient-to-br from-white to-elbfunkeln-beige/20 shadow-xl hover:shadow-2xl transition-all duration-300">
             <div className="aspect-square overflow-hidden rounded-lg mb-4">
               <img
-                src={product.image_url || 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=300&q=80'}
+                src={product.images?.[0]?.url || product.image_url || 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=300&q=80'}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
@@ -635,14 +639,115 @@ export function EnhancedProductManager() {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="image_url">Bild-URL</Label>
-                <Input
-                  id="image_url"
-                  value={formData.image_url || ''}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
-                />
+              {/* Product Images Management */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Produktbilder (imgur Links)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const currentImages = formData.images || [];
+                      setFormData({
+                        ...formData,
+                        images: [...currentImages, { id: `temp-${Date.now()}`, url: '', alt: '', isPrimary: currentImages.length === 0 }]
+                      });
+                    }}
+                  >
+                    <Plus size={14} className="mr-1" />
+                    Bild hinzufügen
+                  </Button>
+                </div>
+
+                {(formData.images || []).map((image, index) => (
+                  <Card key={image.id || index} className="p-3">
+                    <div className="flex gap-3">
+                      {/* Image Preview */}
+                      {image.url && (
+                        <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                          <img
+                            src={image.url}
+                            alt={image.alt || 'Produktbild'}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=300&q=80';
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Image Fields */}
+                      <div className="flex-1 space-y-2">
+                        <div>
+                          <Label className="text-xs">Bild-URL (imgur)</Label>
+                          <Input
+                            value={image.url}
+                            onChange={(e) => {
+                              const updatedImages = [...(formData.images || [])];
+                              updatedImages[index] = { ...updatedImages[index], url: e.target.value };
+                              setFormData({ ...formData, images: updatedImages });
+                            }}
+                            placeholder="https://i.imgur.com/..."
+                            className="text-sm"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Alt-Text (optional)</Label>
+                          <Input
+                            value={image.alt || ''}
+                            onChange={(e) => {
+                              const updatedImages = [...(formData.images || [])];
+                              updatedImages[index] = { ...updatedImages[index], alt: e.target.value };
+                              setFormData({ ...formData, images: updatedImages });
+                            }}
+                            placeholder="Beschreibung des Bildes"
+                            className="text-sm"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`primary-${index}`}
+                              checked={image.isPrimary || false}
+                              onCheckedChange={(checked) => {
+                                const updatedImages = (formData.images || []).map((img, i) => ({
+                                  ...img,
+                                  isPrimary: i === index ? !!checked : false
+                                }));
+                                setFormData({ ...formData, images: updatedImages });
+                              }}
+                            />
+                            <Label htmlFor={`primary-${index}`} className="text-xs">Hauptbild</Label>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const updatedImages = (formData.images || []).filter((_, i) => i !== index);
+                              // Wenn das erste Bild gelöscht wird, mache das nächste zum Hauptbild
+                              if (updatedImages.length > 0 && image.isPrimary) {
+                                updatedImages[0].isPrimary = true;
+                              }
+                              setFormData({ ...formData, images: updatedImages });
+                            }}
+                            className="text-red-600"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+
+                {(!formData.images || formData.images.length === 0) && (
+                  <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+                    <p className="text-sm text-gray-500">Keine Bilder hinzugefügt</p>
+                    <p className="text-xs text-gray-400 mt-1">Klicken Sie auf "Bild hinzufügen", um Produktbilder hochzuladen</p>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-4">
