@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Input } from '../ui/input';
@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Separator } from '../ui/separator';
 import { toast } from 'sonner';
 import apiService, { Product, Category } from '../../services/apiService';
+import { ProductImageUpload } from './ProductImageUpload';
 import { validateProductForeignKeys } from '../../utils/validation';
 
 // API wrapper functions
@@ -31,7 +32,8 @@ const createProduct = async (product: any) => {
     isActive: product.status === 'active',
     discountPrice: product.discountPrice || product.salePrice,
     isFeatured: product.isFeatured || false,
-    giftboxavailable: product.giftWrappingAvailable || product.giftboxavailable || false
+    giftboxavailable: product.giftWrappingAvailable || product.giftboxavailable || false,
+    images: product.images || []
   };
 
   // Validate foreign keys before sending to API
@@ -50,7 +52,8 @@ const updateProduct = async (id: string, product: any) => {
     isActive: product.status === 'active',
     discountPrice: product.discountPrice || product.salePrice,
     isFeatured: product.isFeatured,
-    giftboxavailable: product.giftWrappingAvailable || product.giftboxavailable
+    giftboxavailable: product.giftWrappingAvailable || product.giftboxavailable,
+    images: product.images || []
   };
 
   // Validate foreign keys before sending to API
@@ -200,20 +203,28 @@ export function EnhancedProductManager() {
       const basicProducts = await getProducts();
 
       // Konvertiere zu EnhancedProduct Format (mit Fallback-Werten)
-      const enhancedProducts: EnhancedProduct[] = basicProducts.map(product => ({
-        ...product,
-        customAttributes: [],
-        materials: ['Handgefertigter Draht'],
-        colors: [],
-        sizes: [],
-        dimensions: [],
-        tags: [],
-        isNew: false,
-        isSale: false,
-        giftWrappingAvailable: false,
-        // Lade erweiterte Daten aus localStorage falls verfügbar
-        ...getStoredProductEnhancements(product.id)
-      }));
+      const enhancedProducts: EnhancedProduct[] = basicProducts.map(product => {
+        const storedEnhancements = getStoredProductEnhancements(product.id);
+        return {
+          ...product,
+          // Verwende Bilder aus der API, falls vorhanden, sonst aus localStorage
+          images: product.images && product.images.length > 0 ? product.images : storedEnhancements.images || [],
+          customAttributes: storedEnhancements.customAttributes || [],
+          materials: storedEnhancements.materials || ['Handgefertigter Draht'],
+          colors: storedEnhancements.colors || [],
+          sizes: storedEnhancements.sizes || [],
+          dimensions: storedEnhancements.dimensions || [],
+          tags: storedEnhancements.tags || [],
+          isNew: storedEnhancements.isNew || false,
+          isSale: storedEnhancements.isSale || false,
+          giftWrappingAvailable: storedEnhancements.giftWrappingAvailable || false,
+          seoTitle: storedEnhancements.seoTitle,
+          seoDescription: storedEnhancements.seoDescription,
+          salePrice: storedEnhancements.salePrice,
+          weight: storedEnhancements.weight,
+          careInstructions: storedEnhancements.careInstructions
+        };
+      });
 
       setProducts(enhancedProducts);
     } catch (error) {
@@ -255,7 +266,11 @@ export function EnhancedProductManager() {
         image_url: formData.image_url || '',
         categoryId: formData.category!,
         stock: formData.stock || 0,
-        status: formData.status as 'active' | 'inactive'
+        status: formData.status as 'active' | 'inactive',
+        images: formData.images || [],
+        isFeatured: formData.isFeatured || false,
+        discountPrice: formData.salePrice,
+        giftboxavailable: formData.giftWrappingAvailable || false
       };
 
       let savedProduct: Product;
@@ -270,9 +285,8 @@ export function EnhancedProductManager() {
         return;
       }
 
-      // Speichere erweiterte Daten separat (inkl. Bilder)
+      // Speichere nur erweiterte Daten im localStorage (nicht die Bilder!)
       const enhancements = {
-        images: formData.images || [],
         customAttributes: formData.customAttributes || [],
         materials: formData.materials || [],
         colors: formData.colors || [],
@@ -283,10 +297,8 @@ export function EnhancedProductManager() {
         seoDescription: formData.seoDescription,
         isNew: formData.isNew || false,
         isSale: formData.isSale || false,
-        salePrice: formData.salePrice,
         weight: formData.weight,
-        careInstructions: formData.careInstructions,
-        giftWrappingAvailable: formData.giftWrappingAvailable || false
+        careInstructions: formData.careInstructions
       };
 
       saveProductEnhancements(savedProduct.id, enhancements);
@@ -313,7 +325,7 @@ export function EnhancedProductManager() {
       });
       setEditingProduct(null);
       setIsCreateMode(false);
-      
+
       // Reload products
       await loadProducts();
     } catch (error) {
@@ -638,8 +650,38 @@ export function EnhancedProductManager() {
                   rows={3}
                 />
               </div>
+            </div>
 
-              {/* Product Images Management */}
+            <Separator />
+
+            {/* Image Upload Section - Only show when editing existing product */}
+            {editingProduct && !isCreateMode && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <ImageIcon size={20} className="text-elbfunkeln-green" />
+                  <h3 className="font-cormorant text-lg text-elbfunkeln-green">Bild-Upload</h3>
+                </div>
+                <ProductImageUpload
+                  productId={editingProduct.id}
+                  onImagesUpdate={loadProducts}
+                />
+              </div>
+            )}
+
+            {isCreateMode && (
+              <div className="bg-elbfunkeln-beige/20 border border-elbfunkeln-green/20 rounded-lg p-4">
+                <p className="text-sm text-elbfunkeln-green/70 flex items-center gap-2">
+                  <ImageIcon size={16} />
+                  Bild-Upload verfügbar nach dem Erstellen des Produkts
+                </p>
+              </div>
+            )}
+
+            <Separator />
+
+            {/* Legacy Product Images Management (imgur Links) */}
+            <div className="space-y-4">
+              <h3 className="font-cormorant text-lg text-elbfunkeln-green">Alternative Bilder (imgur Links - Legacy)</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <Label>Produktbilder (imgur Links)</Label>

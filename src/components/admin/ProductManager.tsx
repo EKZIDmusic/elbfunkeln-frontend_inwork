@@ -1,9 +1,9 @@
 // Vereinfachter Produktmanager für Elbfunkeln Admin-Dashboard
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { 
-  Package, Search, Plus, Edit, Trash2, Eye, 
-  RefreshCw, AlertTriangle, CheckCircle, XCircle
+import {
+  Package, Search, Plus, Edit, Trash2, Eye,
+  RefreshCw, AlertTriangle, CheckCircle, XCircle, Image as ImageIcon
 } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
@@ -18,6 +18,8 @@ import { useAuth } from '../AuthContext';
 import apiService, { Product } from '../../services/apiService';
 import { toast } from 'sonner@2.0.3';
 import { validateProductForeignKeys, isValidUUID } from '../../utils/validation';
+import { ProductImageUpload } from './ProductImageUpload';
+import { Separator } from '../ui/separator';
 
 // API wrapper functions
 const getProducts = async () => {
@@ -36,7 +38,8 @@ const createProduct = async (product: any) => {
     isActive: product.status === 'active',
     discountPrice: product.discountPrice,
     isFeatured: product.isFeatured || false,
-    giftboxavailable: product.giftboxavailable || false
+    giftboxavailable: product.giftboxavailable || false,
+    images: product.images || []
   };
 
   // Validate foreign keys before sending to API
@@ -55,7 +58,8 @@ const updateProduct = async (id: string, product: any) => {
     isActive: product.status === 'active',
     discountPrice: product.discountPrice,
     isFeatured: product.isFeatured,
-    giftboxavailable: product.giftboxavailable
+    giftboxavailable: product.giftboxavailable,
+    images: product.images || []
   };
 
   // Validate foreign keys before sending to API
@@ -554,8 +558,8 @@ export function ProductManager() {
               <TableRow key={product.id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <img 
-                      src={product.image_url} 
+                    <img
+                      src={product.images?.[0]?.url || product.image_url || 'https://via.placeholder.com/40x40?text=Kein+Bild'}
                       alt={product.name}
                       className="w-12 h-12 object-cover rounded-lg"
                       onError={(e) => {
@@ -667,7 +671,25 @@ export function ProductManager() {
                 rows={2}
               />
             </div>
-            
+
+            <Separator />
+
+            {/* Image Upload Section */}
+            {editingProduct && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <ImageIcon size={20} className="text-elbfunkeln-green" />
+                  <h3 className="font-semibold text-elbfunkeln-green">Produkt-Bilder</h3>
+                </div>
+                <ProductImageUpload
+                  productId={editingProduct.id}
+                  onImagesUpdate={loadData}
+                />
+              </div>
+            )}
+
+            <Separator />
+
             <div>
               <Label htmlFor="edit-detailed_description">Detaillierte Beschreibung</Label>
               <Textarea

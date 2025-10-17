@@ -998,11 +998,45 @@ export const adminProductsApi = {
       method: 'DELETE',
     }, true),
 
-  uploadImage: (productId: string, formData: FormData) =>
-    apiCall<ProductImage>(`/admin/products/${productId}/images`, {
+  // Image Management
+  uploadImage: async (productId: string, file: File, alt?: string, isPrimary?: boolean) => {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Nicht authentifiziert');
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    if (alt) formData.append('alt', alt);
+    if (isPrimary !== undefined) formData.append('isPrimary', isPrimary.toString());
+
+    const response = await fetch(`${API_BASE_URL}/admin/products/${productId}/images/upload`, {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
       body: formData,
-      headers: {},
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Fehler beim Hochladen des Bildes');
+    }
+
+    return response.json();
+  },
+
+  getProductImages: (productId: string) =>
+    apiCall<ProductImage[]>(`/admin/products/${productId}/images`, {}, true),
+
+  deleteProductImage: (productId: string, imageId: string) =>
+    apiCall<{ message: string }>(`/admin/products/${productId}/images/${imageId}`, {
+      method: 'DELETE',
+    }, true),
+
+  setPrimaryImage: (productId: string, imageId: string) =>
+    apiCall<ProductImage>(`/admin/products/${productId}/images/${imageId}/primary`, {
+      method: 'PUT',
     }, true),
 };
 
