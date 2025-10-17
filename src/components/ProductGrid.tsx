@@ -30,8 +30,11 @@ export function ProductGrid() {
   };
 
   const getPrimaryImage = (product: Product): string => {
+    if (!product.images || product.images.length === 0) {
+      return 'https://via.placeholder.com/400x400?text=Kein+Bild';
+    }
     const primaryImage = product.images.find(img => img.isPrimary);
-    return primaryImage?.url || product.images[0]?.url || '';
+    return primaryImage?.url || product.images[0]?.url || 'https://via.placeholder.com/400x400?text=Kein+Bild';
   };
 
   const handleAddToCart = (product: Product) => {

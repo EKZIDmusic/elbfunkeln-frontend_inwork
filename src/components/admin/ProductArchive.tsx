@@ -220,11 +220,11 @@ export function ProductArchive() {
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <img
-                      src={product.image_url}
+                      src={product.images?.[0]?.url || product.image_url || 'https://via.placeholder.com/48x48?text=Kein+Bild'}
                       alt={product.name}
                       className="w-12 h-12 object-cover rounded-lg grayscale"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=48&h=48&fit=crop';
+                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/48x48?text=Kein+Bild';
                       }}
                     />
                     <div>

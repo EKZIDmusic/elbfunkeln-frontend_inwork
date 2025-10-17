@@ -4,7 +4,7 @@ import { ShoppingCart, Heart, Eye, Star } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { products, categories } from '../data/products';
+import apiService, { Product as ApiProduct } from '../services/apiService';
 import { useCart, Product as CartProduct } from './CartContext';
 import { useRouter } from './Router';
 import { toast } from 'sonner@2.0.3';
@@ -53,24 +53,42 @@ export function StaticProductGrid({
     setFavoriteProducts(favorites);
   }, [categoryId, limit]);
 
-  const loadProducts = () => {
+  const loadProducts = async () => {
     setLoading(true);
-    
-    // Simulate loading delay
-    setTimeout(() => {
-      let filteredProducts = products as Product[];
-      
+    try {
+      const response = await apiService.products.getAll({ limit: limit || 100 });
+      let filteredProducts = response.data;
+
       if (categoryId && categoryId !== 'all') {
-        filteredProducts = products.filter(product => product.category === categoryId) as Product[];
+        filteredProducts = filteredProducts.filter(product => {
+          const prodCategory = typeof product.category === 'object' ? product.category.id : product.categoryId;
+          return prodCategory === categoryId;
+        });
       }
-      
-      if (limit) {
-        filteredProducts = filteredProducts.slice(0, limit);
-      }
-      
-      setDisplayProducts(filteredProducts);
+
+      // Map API products to display format
+      const mappedProducts: Product[] = filteredProducts.map(apiProduct => ({
+        id: apiProduct.id,
+        name: apiProduct.name,
+        price: apiProduct.discountPrice || apiProduct.price,
+        image: apiProduct.images?.[0]?.url || 'https://via.placeholder.com/400x400?text=Kein+Bild',
+        category: typeof apiProduct.category === 'object' ? apiProduct.category.name : '',
+        description: apiProduct.description,
+        isNew: apiProduct.isFeatured,
+        isSale: !!apiProduct.discountPrice,
+        inStock: apiProduct.stock > 0,
+        materials: ['Handgefertigt'],
+        originalPrice: apiProduct.discountPrice ? apiProduct.price : undefined
+      }));
+
+      setDisplayProducts(mappedProducts);
+    } catch (error) {
+      console.error('Error loading products:', error);
+      toast.error('Fehler beim Laden der Produkte');
+      setDisplayProducts([]);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   const handleAddToCart = (product: Product) => {
