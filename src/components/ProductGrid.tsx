@@ -30,10 +30,13 @@ export function ProductGrid() {
   };
 
   const getPrimaryImage = (product: Product): string => {
+    console.log({product});
     if (!product.images || product.images.length === 0) {
-      return 'https://via.placeholder.com/400x400?text=Kein+Bild';
+      // hier muss die richtige URL für das Platzhalterbild eingefügt werden
+      return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSq7L1tIPk7QMbHVjV1ixR_Oo4IgaZLE-CUyQ&s';
     }
     const primaryImage = product.images.find(img => img.isPrimary);
+    // hier muss die richtige URL für das Platzhalterbild eingefügt werden
     return primaryImage?.url || product.images[0]?.url || 'https://via.placeholder.com/400x400?text=Kein+Bild';
   };
 
