@@ -37,7 +37,7 @@ export function ProductGrid() {
     }
     const primaryImage = product.images.find(img => img.isPrimary);
     // hier muss die richtige URL für das Platzhalterbild eingefügt werden
-    return primaryImage?.url || product.images[0]?.url || 'https://via.placeholder.com/400x400?text=Kein+Bild';
+    return primaryImage?.url || product.images[0]?.url || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSq7L1tIPk7QMbHVjV1ixR_Oo4IgaZLE-CUyQ&s';
   };
 
   const handleAddToCart = (product: Product) => {
