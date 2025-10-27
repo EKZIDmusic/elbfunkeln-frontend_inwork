@@ -30,6 +30,7 @@ export function ProductGrid() {
   };
 
   const getPrimaryImage = (product: Product): string => {
+    console.log("getPrimaryImage")
     console.log({product});
     if (!product.images || product.images.length === 0) {
       // hier muss die richtige URL für das Platzhalterbild eingefügt werden
@@ -95,6 +96,7 @@ export function ProductGrid() {
                     alt={product.name}
                     className="w-full h-full object-cover"
                   />
+                
                   {product.discountPrice && (
                     <Badge className="absolute top-2 right-2 bg-elbfunkeln-rose text-white">
                       Sale
