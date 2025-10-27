@@ -96,7 +96,6 @@ export function ProductGrid() {
                     alt={product.name}
                     className="w-full h-full object-cover"
                   />
-                
                   {product.discountPrice && (
                     <Badge className="absolute top-2 right-2 bg-elbfunkeln-rose text-white">
                       Sale
