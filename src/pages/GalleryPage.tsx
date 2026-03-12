@@ -102,7 +102,7 @@ export function GalleryPage() {
 
   if (posts.length === 0) {
     return (
-      <div className="min-h-screen bg-elbfunkeln-beige pt-44 pb-16">
+      <div className="min-h-screen bg-elbfunkeln-beige pt-24 pb-16">
         <div className="container mx-auto px-4 text-center pt-20">
           <h1 className="font-cormorant text-4xl md:text-5xl text-elbfunkeln-green mb-4">Galerie</h1>
           <p className="font-inter text-lg text-elbfunkeln-green/60">Bald findest du hier Einblicke in unsere Welt.</p>
@@ -112,14 +112,14 @@ export function GalleryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-elbfunkeln-beige pt-44 pb-20">
+    <div className="min-h-screen bg-elbfunkeln-beige pt-24 pb-20">
       <div className="container mx-auto px-4 max-w-6xl">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-8"
+          className="text-center mb-8 mt-6"
         >
           <h1 className="font-cormorant text-4xl md:text-5xl text-elbfunkeln-green mb-2">Galerie</h1>
           <p className="font-inter text-sm text-elbfunkeln-green/50 max-w-md mx-auto">
