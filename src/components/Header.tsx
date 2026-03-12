@@ -8,7 +8,7 @@ export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { navigateTo } = useRouter();
-  const { user, isLoggedIn, logout, loading } = useAuth();
+  const { user, isLoggedIn, isShopOwner, isAdmin, logout, loading } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -84,11 +84,15 @@ export function Header() {
                       {user?.email}
                     </p>
                   </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigateTo('gallery-upload')}>
-                    <ImagePlus className="mr-2 h-4 w-4 text-elbfunkeln-lavender" />
-                    Bilder hochladen
-                  </DropdownMenuItem>
+                  {(isShopOwner() || isAdmin()) && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => navigateTo('gallery-upload')}>
+                        <ImagePlus className="mr-2 h-4 w-4 text-elbfunkeln-lavender" />
+                        Galerie-Editor
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={async () => {
                     try {
@@ -153,15 +157,17 @@ export function Header() {
                       {user?.name || user?.email}
                     </p>
                   </div>
-                  <button
-                    onClick={() => {
-                      navigateTo('gallery-upload');
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="block py-2 font-inter text-elbfunkeln-green text-left w-full hover:text-elbfunkeln-green/80 hover:bg-elbfunkeln-green/5 transition-colors duration-200"
-                  >
-                    Bilder hochladen
-                  </button>
+                  {(isShopOwner() || isAdmin()) && (
+                    <button
+                      onClick={() => {
+                        navigateTo('gallery-upload');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="block py-2 font-inter text-elbfunkeln-green text-left w-full hover:text-elbfunkeln-green/80 hover:bg-elbfunkeln-green/5 transition-colors duration-200"
+                    >
+                      Galerie-Editor
+                    </button>
+                  )}
                   <button
                     onClick={async () => {
                       try {
