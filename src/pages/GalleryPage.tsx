@@ -102,7 +102,7 @@ export function GalleryPage() {
 
   if (posts.length === 0) {
     return (
-      <div className="min-h-screen bg-elbfunkeln-beige pt-28 pb-16">
+      <div className="min-h-screen bg-elbfunkeln-beige pt-36 pb-16">
         <div className="container mx-auto px-4 text-center pt-20">
           <h1 className="font-cormorant text-4xl md:text-5xl text-elbfunkeln-green mb-4">Galerie</h1>
           <p className="font-inter text-lg text-elbfunkeln-green/60">Bald findest du hier Einblicke in unsere Welt.</p>
@@ -112,7 +112,7 @@ export function GalleryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-elbfunkeln-beige pt-28 pb-20">
+    <div className="min-h-screen bg-elbfunkeln-beige pt-36 pb-20">
       <div className="container mx-auto px-4 max-w-6xl">
         {/* Header */}
         <motion.div
@@ -222,171 +222,171 @@ export function GalleryPage() {
       {/* ═══ LIGHTBOX ═══ */}
       <AnimatePresence>
         {selectedPost && selectedPostIndex !== null && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 overflow-y-auto"
-            onClick={closeLightbox}
-          >
-            {/* Blurred background — strong blur */}
-            <div className="fixed inset-0 bg-black/70 backdrop-blur-3xl" />
-
-            {/* Close */}
-            <button
-              type="button"
+          <>
+            {/* Overlay background — solid dark, covers everything */}
+            <motion.div
+              key="lightbox-bg"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 bg-neutral-900/95"
               onClick={closeLightbox}
-              className="fixed top-5 right-5 z-40 p-2 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white/60 hover:text-white hover:bg-white/20 transition-all"
-              title="Schließen"
+            />
+
+            {/* Lightbox content */}
+            <motion.div
+              key="lightbox-content"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 overflow-y-auto pointer-events-none"
             >
-              <X size={16} />
-            </button>
+              <div className="min-h-full flex items-center justify-center p-8 md:p-16">
+                <div className="w-full max-w-2xl pointer-events-auto" onClick={(e) => e.stopPropagation()}>
 
-            {/* Prev/Next post */}
-            {selectedPostIndex > 0 && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); goToPrevPost(); }}
-                className="fixed left-4 top-1/2 -translate-y-1/2 z-40 p-2.5 rounded-full bg-white/10 backdrop-blur-xl border border-white/15 text-white/40 hover:text-white hover:bg-white/20 transition-all"
-                title="Vorheriger Beitrag"
-              >
-                <ChevronLeft size={20} />
-              </button>
-            )}
-            {selectedPostIndex < filteredPosts.length - 1 && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); goToNextPost(); }}
-                className="fixed right-4 top-1/2 -translate-y-1/2 z-40 p-2.5 rounded-full bg-white/10 backdrop-blur-xl border border-white/15 text-white/40 hover:text-white hover:bg-white/20 transition-all"
-                title="Nächster Beitrag"
-              >
-                <ChevronRight size={20} />
-              </button>
-            )}
+                  {/* Image */}
+                  <motion.div
+                    key={`${selectedPost.id}-${lightboxImageIndex}`}
+                    initial={{ scale: 0.97, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.25 }}
+                    className="relative"
+                  >
+                    <img
+                      src={selectedImages[lightboxImageIndex]}
+                      alt={selectedPost.title}
+                      className="w-full rounded-2xl object-cover lightbox-image"
+                    />
 
-            {/* Content — centered, constrained */}
-            <div
-              className="relative z-30 min-h-screen flex items-center justify-center p-6 md:p-12"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="w-full max-w-2xl">
-                {/* Image */}
-                <motion.div
-                  key={`${selectedPost.id}-${lightboxImageIndex}`}
-                  initial={{ scale: 0.97, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.25 }}
-                  className="relative"
-                >
-                  <img
-                    src={selectedImages[lightboxImageIndex]}
-                    alt={selectedPost.title}
-                    className="w-full rounded-2xl object-cover lightbox-image"
-                  />
-
-                  {/* Inner image nav */}
-                  {selectedImages.length > 1 && (
-                    <>
-                      {lightboxImageIndex > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setLightboxImageIndex(prev => prev - 1)}
-                          className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/30 backdrop-blur-md text-white/80 hover:bg-black/50 transition-all"
-                          title="Vorheriges Bild"
-                        >
-                          <ChevronLeft size={16} />
-                        </button>
-                      )}
-                      {lightboxImageIndex < selectedImages.length - 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setLightboxImageIndex(prev => prev + 1)}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/30 backdrop-blur-md text-white/80 hover:bg-black/50 transition-all"
-                          title="Nächstes Bild"
-                        >
-                          <ChevronRight size={16} />
-                        </button>
-                      )}
-                    </>
-                  )}
-                </motion.div>
-
-                {/* Dots */}
-                {selectedImages.length > 1 && (
-                  <div className="flex items-center justify-center gap-1.5 mt-3">
-                    {selectedImages.map((_, i) => (
+                    {/* Image nav arrows */}
+                    {selectedImages.length > 1 && lightboxImageIndex > 0 && (
                       <button
                         type="button"
-                        key={i}
-                        onClick={() => setLightboxImageIndex(i)}
-                        title={`Bild ${i + 1}`}
-                        className={`rounded-full transition-all duration-300 ${
-                          i === lightboxImageIndex
-                            ? 'w-5 h-1.5 bg-white'
-                            : 'w-1.5 h-1.5 bg-white/30 hover:bg-white/50'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                )}
+                        onClick={() => setLightboxImageIndex(prev => prev - 1)}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white/90 hover:bg-black/60 transition-all"
+                        title="Vorheriges Bild"
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+                    )}
+                    {selectedImages.length > 1 && lightboxImageIndex < selectedImages.length - 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setLightboxImageIndex(prev => prev + 1)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white/90 hover:bg-black/60 transition-all"
+                        title="Nächstes Bild"
+                      >
+                        <ChevronRight size={18} />
+                      </button>
+                    )}
+                  </motion.div>
 
-                {/* Info panel */}
-                <motion.div
-                  key={`info-${selectedPost.id}`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.08, duration: 0.3 }}
-                  className="mt-4 bg-white/8 backdrop-blur-2xl rounded-2xl border border-white/10 p-5"
-                >
-                  {/* Title & date */}
-                  <div className="flex items-start justify-between gap-4">
-                    <h2 className="font-cormorant text-xl md:text-2xl text-white leading-tight">
-                      {selectedPost.title}
-                    </h2>
-                    <span className="font-inter text-[10px] text-white/20 whitespace-nowrap mt-1.5 shrink-0">
-                      {formatDate(selectedPost.createdAt)}
-                    </span>
-                  </div>
-
-                  {/* Description */}
-                  {selectedPost.description && (
-                    <p className="font-inter text-xs text-white/45 leading-relaxed mt-2 max-w-xl">
-                      {selectedPost.description}
-                    </p>
-                  )}
-
-                  {/* Tags & Materials */}
-                  {(selectedPost.tags.length > 0 || selectedPost.materials.length > 0) && (
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {selectedPost.tags.map(tag => (
-                        <span key={tag} className="px-2.5 py-0.5 rounded-full text-[10px] font-inter bg-white/8 text-white/40 border border-white/8">
-                          {tag}
-                        </span>
-                      ))}
-                      {selectedPost.materials.map(mat => (
-                        <span key={mat} className="px-2.5 py-0.5 rounded-full text-[10px] font-inter bg-white/5 text-white/30 border border-white/6 italic">
-                          {mat}
-                        </span>
+                  {/* Dots */}
+                  {selectedImages.length > 1 && (
+                    <div className="flex items-center justify-center gap-1.5 mt-3">
+                      {selectedImages.map((_, i) => (
+                        <button
+                          type="button"
+                          key={i}
+                          onClick={() => setLightboxImageIndex(i)}
+                          title={`Bild ${i + 1}`}
+                          className={`rounded-full transition-all duration-300 ${
+                            i === lightboxImageIndex
+                              ? 'w-5 h-1.5 bg-white'
+                              : 'w-1.5 h-1.5 bg-white/30 hover:bg-white/50'
+                          }`}
+                        />
                       ))}
                     </div>
                   )}
 
-                  {/* Counter */}
-                  <div className="mt-3 pt-2.5 border-t border-white/6 flex items-center justify-between">
-                    <span className="font-inter text-[10px] text-white/15">
-                      {selectedPostIndex + 1} / {filteredPosts.length}
-                    </span>
-                    {selectedImages.length > 1 && (
-                      <span className="font-inter text-[10px] text-white/15">
-                        Bild {lightboxImageIndex + 1} von {selectedImages.length}
+                  {/* Info panel — solid dark background */}
+                  <motion.div
+                    key={`info-${selectedPost.id}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.08, duration: 0.3 }}
+                    className="mt-4 bg-neutral-800/80 rounded-2xl border border-white/8 p-5"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <h2 className="font-cormorant text-xl md:text-2xl text-white leading-tight">
+                        {selectedPost.title}
+                      </h2>
+                      <span className="font-inter text-[10px] text-white/25 whitespace-nowrap mt-1.5 shrink-0">
+                        {formatDate(selectedPost.createdAt)}
                       </span>
+                    </div>
+
+                    {selectedPost.description && (
+                      <p className="font-inter text-xs text-white/50 leading-relaxed mt-2 max-w-xl">
+                        {selectedPost.description}
+                      </p>
                     )}
-                  </div>
-                </motion.div>
+
+                    {(selectedPost.tags.length > 0 || selectedPost.materials.length > 0) && (
+                      <div className="flex flex-wrap gap-1.5 mt-3">
+                        {selectedPost.tags.map(tag => (
+                          <span key={tag} className="px-2.5 py-0.5 rounded-full text-[10px] font-inter bg-white/10 text-white/45 border border-white/8">
+                            {tag}
+                          </span>
+                        ))}
+                        {selectedPost.materials.map(mat => (
+                          <span key={mat} className="px-2.5 py-0.5 rounded-full text-[10px] font-inter bg-white/5 text-white/30 border border-white/6 italic">
+                            {mat}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="mt-3 pt-2.5 border-t border-white/8 flex items-center justify-between">
+                      <span className="font-inter text-[10px] text-white/20">
+                        {selectedPostIndex + 1} / {filteredPosts.length}
+                      </span>
+                      {selectedImages.length > 1 && (
+                        <span className="font-inter text-[10px] text-white/20">
+                          Bild {lightboxImageIndex + 1} von {selectedImages.length}
+                        </span>
+                      )}
+                    </div>
+                  </motion.div>
+                </div>
               </div>
-            </div>
-          </motion.div>
+
+              {/* Close button */}
+              <button
+                type="button"
+                onClick={closeLightbox}
+                className="fixed top-5 right-5 pointer-events-auto p-2.5 rounded-full bg-white/10 border border-white/15 text-white/60 hover:text-white hover:bg-white/20 transition-all"
+                title="Schließen"
+              >
+                <X size={16} />
+              </button>
+
+              {/* Prev/Next post arrows */}
+              {selectedPostIndex > 0 && (
+                <button
+                  type="button"
+                  onClick={goToPrevPost}
+                  className="fixed left-5 top-1/2 -translate-y-1/2 pointer-events-auto p-2.5 rounded-full bg-white/10 border border-white/15 text-white/40 hover:text-white hover:bg-white/20 transition-all"
+                  title="Vorheriger Beitrag"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+              )}
+              {selectedPostIndex < filteredPosts.length - 1 && (
+                <button
+                  type="button"
+                  onClick={goToNextPost}
+                  className="fixed right-5 top-1/2 -translate-y-1/2 pointer-events-auto p-2.5 rounded-full bg-white/10 border border-white/15 text-white/40 hover:text-white hover:bg-white/20 transition-all"
+                  title="Nächster Beitrag"
+                >
+                  <ChevronRight size={20} />
+                </button>
+              )}
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
