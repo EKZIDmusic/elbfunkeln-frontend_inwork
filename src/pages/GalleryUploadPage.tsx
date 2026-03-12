@@ -98,10 +98,21 @@ export function GalleryUploadPage() {
 
   const { navigateTo } = useRouter();
 
-  const refresh = useCallback(() => {
-    setPosts(galleryService.getAll());
-    setAllTags(galleryService.getAllTags());
-    setAllMaterials(galleryService.getAllMaterials());
+  const [loading, setLoading] = useState(false);
+
+  const refresh = useCallback(async () => {
+    try {
+      const [p, t, m] = await Promise.all([
+        galleryService.getAll(),
+        galleryService.getAllTags(),
+        galleryService.getAllMaterials(),
+      ]);
+      setPosts(p);
+      setAllTags(t);
+      setAllMaterials(m);
+    } catch (err: any) {
+      toast.error(err.message || 'Fehler beim Laden der Galerie');
+    }
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
@@ -143,11 +154,12 @@ export function GalleryUploadPage() {
     try {
       const newImages: string[] = [];
       for (const file of imageFiles) {
-        newImages.push(await galleryService.compressImage(file));
+        const url = await galleryService.uploadImage(file);
+        newImages.push(url);
       }
       setFormImages(prev => [...prev, ...newImages]);
       toast.success(`${newImages.length} Bild${newImages.length > 1 ? 'er' : ''} hinzugefügt`);
-    } catch { toast.error('Fehler beim Verarbeiten.'); }
+    } catch (err: any) { toast.error(err.message || 'Fehler beim Hochladen.'); }
     finally { setUploading(false); }
   };
 
@@ -188,42 +200,52 @@ export function GalleryUploadPage() {
   };
 
   /* ── Save ── */
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formTitle.trim()) { toast.error('Bitte gib einen Titel ein.'); return; }
     if (formImages.length === 0) { toast.error('Bitte lade mindestens ein Bild hoch.'); return; }
 
-    if (editorView === 'edit' && editingPost) {
-      galleryService.update(editingPost.id, {
-        title: formTitle.trim(),
-        description: formDescription.trim() || undefined,
-        tags: formTags,
-        materials: formMaterials,
-        imageUrl: formImages[0],
-        images: formImages,
-        featured: formFeatured,
-      });
-      toast.success('Beitrag aktualisiert');
-    } else {
-      galleryService.add({
-        imageUrl: formImages[0],
-        images: formImages,
-        title: formTitle.trim(),
-        description: formDescription.trim() || undefined,
-        tags: formTags,
-        materials: formMaterials,
-      });
-      toast.success('Beitrag erstellt');
+    setLoading(true);
+    try {
+      if (editorView === 'edit' && editingPost) {
+        await galleryService.update(editingPost.id, {
+          title: formTitle.trim(),
+          description: formDescription.trim() || undefined,
+          tags: formTags,
+          materials: formMaterials,
+          imageUrl: formImages[0],
+          images: formImages,
+          featured: formFeatured,
+        });
+        toast.success('Beitrag aktualisiert');
+      } else {
+        await galleryService.add({
+          images: formImages,
+          title: formTitle.trim(),
+          description: formDescription.trim() || undefined,
+          tags: formTags,
+          materials: formMaterials,
+        });
+        toast.success('Beitrag erstellt');
+      }
+      await refresh();
+      backToOverview();
+    } catch (err: any) {
+      toast.error(err.message || 'Fehler beim Speichern.');
+    } finally {
+      setLoading(false);
     }
-    refresh();
-    backToOverview();
   };
 
-  const handleDeleteFromEdit = () => {
+  const handleDeleteFromEdit = async () => {
     if (editingPost) {
-      galleryService.remove(editingPost.id);
-      refresh();
-      toast.success('Beitrag entfernt');
-      backToOverview();
+      try {
+        await galleryService.remove(editingPost.id);
+        await refresh();
+        toast.success('Beitrag entfernt');
+        backToOverview();
+      } catch (err: any) {
+        toast.error(err.message || 'Fehler beim Löschen.');
+      }
     }
   };
 
@@ -238,20 +260,29 @@ export function GalleryUploadPage() {
       setSelectedIds(new Set(filteredPosts.map(p => p.id)));
     }
   };
-  const handleToggleFeatured = (id: string) => {
-    const is = galleryService.toggleFeatured(id); refresh();
-    toast.success(is ? 'Highlight markiert' : 'Highlight entfernt');
+  const handleToggleFeatured = async (id: string) => {
+    try {
+      const is = await galleryService.toggleFeatured(id);
+      await refresh();
+      toast.success(is ? 'Highlight markiert' : 'Highlight entfernt');
+    } catch (err: any) { toast.error(err.message || 'Fehler.'); }
   };
-  const handleDelete = (id: string) => {
-    galleryService.remove(id); refresh();
-    setSelectedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
-    setConfirmDeleteId(null);
-    toast.success('Beitrag entfernt');
+  const handleDelete = async (id: string) => {
+    try {
+      await galleryService.remove(id);
+      await refresh();
+      setSelectedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
+      setConfirmDeleteId(null);
+      toast.success('Beitrag entfernt');
+    } catch (err: any) { toast.error(err.message || 'Fehler beim Löschen.'); }
   };
-  const handleBulkDelete = () => {
-    galleryService.bulkRemove(Array.from(selectedIds)); refresh();
-    setSelectedIds(new Set()); setConfirmBulkDelete(false);
-    toast.success(`${selectedIds.size} Beiträge entfernt`);
+  const handleBulkDelete = async () => {
+    try {
+      await galleryService.bulkRemove(Array.from(selectedIds));
+      await refresh();
+      setSelectedIds(new Set()); setConfirmBulkDelete(false);
+      toast.success(`${selectedIds.size} Beiträge entfernt`);
+    } catch (err: any) { toast.error(err.message || 'Fehler beim Löschen.'); }
   };
 
   /* ── Drag reorder (overview) ── */
@@ -265,12 +296,17 @@ export function GalleryUploadPage() {
     e.dataTransfer.dropEffect = 'move';
     setDragOverId(id);
   };
-  const handleDropItem = (e: React.DragEvent, targetId: string) => {
+  const handleDropItem = async (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
     const sourceId = e.dataTransfer.getData('text/plain');
     if (sourceId && sourceId !== targetId) {
       const targetIdx = posts.findIndex(p => p.id === targetId);
-      if (targetIdx !== -1) { galleryService.moveImage(sourceId, targetIdx); refresh(); }
+      if (targetIdx !== -1) {
+        try {
+          await galleryService.moveImage(sourceId, targetIdx);
+          await refresh();
+        } catch (err: any) { toast.error(err.message || 'Fehler beim Verschieben.'); }
+      }
     }
     setDragOverId(null);
     setDraggingId(null);
@@ -351,7 +387,7 @@ export function GalleryUploadPage() {
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={uploading}
+                disabled={uploading || loading}
                 className="editor-save-btn"
               >
                 {editorView === 'edit' ? (
@@ -757,14 +793,16 @@ export function GalleryUploadPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      selectedIds.forEach(id => {
-                        const p = posts.find(x => x.id === id);
-                        if (p && !p.featured) galleryService.toggleFeatured(id);
-                      });
-                      refresh();
-                      setSelectedIds(new Set());
-                      toast.success('Highlights markiert');
+                    onClick={async () => {
+                      try {
+                        for (const id of selectedIds) {
+                          const p = posts.find(x => x.id === id);
+                          if (p && !p.featured) await galleryService.toggleFeatured(id);
+                        }
+                        await refresh();
+                        setSelectedIds(new Set());
+                        toast.success('Highlights markiert');
+                      } catch (err: any) { toast.error(err.message || 'Fehler.'); }
                     }}
                     className="editor-bulk-btn"
                   >

@@ -17,8 +17,13 @@ export function GalleryPage() {
   const [lightboxImageIndex, setLightboxImageIndex] = useState(0);
   const [activeTag, setActiveTag] = useState<string>('');
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    setPosts(galleryService.getPublic());
+    galleryService.getPublic()
+      .then(setPosts)
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const topTags = useMemo(() => {
@@ -100,12 +105,14 @@ export function GalleryPage() {
     day: 'numeric', month: 'long', year: 'numeric',
   });
 
-  if (posts.length === 0) {
+  if (loading || posts.length === 0) {
     return (
       <div className="min-h-screen bg-elbfunkeln-beige pt-24 pb-16">
         <div className="container mx-auto px-4 text-center pt-20">
           <h1 className="font-cormorant text-4xl md:text-5xl text-elbfunkeln-green mb-4">Galerie</h1>
-          <p className="font-inter text-lg text-elbfunkeln-green/60">Bald findest du hier Einblicke in unsere Welt.</p>
+          {!loading && (
+            <p className="font-inter text-lg text-elbfunkeln-green/60">Bald findest du hier Einblicke in unsere Welt.</p>
+          )}
         </div>
       </div>
     );

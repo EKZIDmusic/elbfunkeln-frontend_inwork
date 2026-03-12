@@ -696,6 +696,133 @@ export const contactApi = {
 };
 
 // ============================================================================
+// GALLERY
+// ============================================================================
+
+export interface GalleryPostResponse {
+  id: string;
+  imageUrl: string;
+  images: string[];
+  title: string;
+  description?: string;
+  tags: string[];
+  materials: string[];
+  featured: boolean;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateGalleryPostData {
+  title: string;
+  description?: string;
+  images: string[];
+  tags: string[];
+  materials: string[];
+}
+
+export interface UpdateGalleryPostData {
+  title?: string;
+  description?: string;
+  imageUrl?: string;
+  images?: string[];
+  tags?: string[];
+  materials?: string[];
+  featured?: boolean;
+}
+
+export interface GalleryUploadResponse {
+  url: string;
+}
+
+export const galleryApi = {
+  // Public endpoints
+  getPublic: () =>
+    apiCall<GalleryPostResponse[]>('/gallery/public'),
+
+  // Admin endpoints (require auth)
+  getAll: (params?: { sort?: string; search?: string; tag?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.sort) queryParams.append('sort', params.sort);
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.tag) queryParams.append('tag', params.tag);
+    const query = queryParams.toString();
+    return apiCall<GalleryPostResponse[]>(`/gallery${query ? `?${query}` : ''}`, {}, true);
+  },
+
+  getById: (id: string) =>
+    apiCall<GalleryPostResponse>(`/gallery/${id}`, {}, true),
+
+  create: (data: CreateGalleryPostData) =>
+    apiCall<GalleryPostResponse>('/gallery', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, true),
+
+  update: (id: string, data: UpdateGalleryPostData) =>
+    apiCall<GalleryPostResponse>(`/gallery/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, true),
+
+  delete: (id: string) =>
+    apiCall<{ message: string }>(`/gallery/${id}`, {
+      method: 'DELETE',
+    }, true),
+
+  bulkDelete: (ids: string[]) =>
+    apiCall<{ message: string }>('/gallery/bulk', {
+      method: 'DELETE',
+      body: JSON.stringify({ ids }),
+    }, true),
+
+  toggleFeatured: (id: string) =>
+    apiCall<{ featured: boolean }>(`/gallery/${id}/featured`, {
+      method: 'PATCH',
+    }, true),
+
+  updateOrder: (id: string, newIndex: number) =>
+    apiCall<{ message: string }>(`/gallery/${id}/order`, {
+      method: 'PATCH',
+      body: JSON.stringify({ newIndex }),
+    }, true),
+
+  getTags: () =>
+    apiCall<string[]>('/gallery/tags', {}, true),
+
+  getMaterials: () =>
+    apiCall<string[]>('/gallery/materials', {}, true),
+
+  uploadImage: async (file: File) => {
+    const token = getAuthToken();
+    if (!token) throw new Error('Nicht authentifiziert');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE_URL}/gallery/upload`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData,
+    });
+
+    if (response.status === 401) {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('elbfunkeln_user');
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      throw new Error('Sitzung abgelaufen.');
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Fehler beim Hochladen des Bildes');
+    }
+
+    return response.json() as Promise<GalleryUploadResponse>;
+  },
+};
+
+// ============================================================================
 // UTILITIES
 // ============================================================================
 
@@ -721,6 +848,7 @@ export default {
   reviews: reviewsApi,
   tickets: ticketsApi,
   contact: contactApi,
+  gallery: galleryApi,
   admin: {
     users: adminUsersApi,
     products: adminProductsApi,
