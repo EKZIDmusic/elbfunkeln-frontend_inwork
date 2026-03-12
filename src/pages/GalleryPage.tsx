@@ -270,20 +270,18 @@ export function GalleryPage() {
                 )}
               </div>
 
-              {/* Dots */}
-              {selectedImages.length > 1 && (
-                <div className="lightbox-dots">
-                  {selectedImages.map((_, i) => (
-                    <button
-                      type="button"
-                      key={i}
-                      onClick={() => setLightboxImageIndex(i)}
-                      title={`Bild ${i + 1}`}
-                      className={`lightbox-dot ${i === lightboxImageIndex ? 'lightbox-dot--active' : ''}`}
-                    />
-                  ))}
-                </div>
-              )}
+              {/* Dots / spacer — fixed height so info panel doesn't shift */}
+              <div className="lightbox-dots">
+                {selectedImages.length > 1 && selectedImages.map((_, i) => (
+                  <button
+                    type="button"
+                    key={i}
+                    onClick={() => setLightboxImageIndex(i)}
+                    title={`Bild ${i + 1}`}
+                    className={`lightbox-dot ${i === lightboxImageIndex ? 'lightbox-dot--active' : ''}`}
+                  />
+                ))}
+              </div>
 
               {/* Info panel */}
               <div className="lightbox-info">
