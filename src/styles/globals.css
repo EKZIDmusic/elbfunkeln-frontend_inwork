@@ -312,6 +312,47 @@ html {
   animation: gallery-drift-3 11s ease-in-out infinite;
 }
 
+/* Gallery Wave — 4 columns, staggered left-to-right for wave effect */
+/* Uses will-change + translateZ(0) for GPU compositing = zero jank */
+@keyframes gallery-wave-1 {
+  0%, 100% { transform: translateY(0) translateZ(0); }
+  50% { transform: translateY(-7px) translateZ(0); }
+}
+@keyframes gallery-wave-2 {
+  0%, 100% { transform: translateY(0) translateZ(0); }
+  50% { transform: translateY(-9px) translateZ(0); }
+}
+@keyframes gallery-wave-3 {
+  0%, 100% { transform: translateY(0) translateZ(0); }
+  50% { transform: translateY(-6px) translateZ(0); }
+}
+@keyframes gallery-wave-4 {
+  0%, 100% { transform: translateY(0) translateZ(0); }
+  50% { transform: translateY(-8px) translateZ(0); }
+}
+
+.animate-gallery-wave-1 {
+  animation: gallery-wave-1 5s ease-in-out infinite;
+  will-change: transform;
+}
+.animate-gallery-wave-2 {
+  animation: gallery-wave-2 5.5s ease-in-out 0.6s infinite;
+  will-change: transform;
+}
+.animate-gallery-wave-3 {
+  animation: gallery-wave-3 6s ease-in-out 1.2s infinite;
+  will-change: transform;
+}
+.animate-gallery-wave-4 {
+  animation: gallery-wave-4 5.8s ease-in-out 1.8s infinite;
+  will-change: transform;
+}
+
+/* Lightbox image max height */
+.lightbox-image {
+  max-height: 55vh;
+}
+
 /* Delay variations for staggered effects */
 .animate-delay-1 { animation-delay: 0.2s; }
 .animate-delay-2 { animation-delay: 0.4s; }
