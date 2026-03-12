@@ -121,21 +121,21 @@ export function GalleryPage() {
           </p>
         </motion.div>
 
-        {/* Tag filter — Apple glass pills */}
+        {/* Tag filter — elegant inline style */}
         {topTags.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="flex flex-wrap justify-center gap-2 mb-12"
+            className="flex flex-wrap justify-center gap-1.5 mb-12"
           >
             <button
               type="button"
               onClick={() => setActiveTag('')}
-              className={`px-5 py-2 rounded-full font-inter text-xs tracking-wide transition-all duration-300 backdrop-blur-xl border ${
+              className={`px-4 py-1.5 rounded-full font-inter text-[11px] font-medium tracking-wider uppercase transition-all duration-300 ${
                 !activeTag
-                  ? 'bg-elbfunkeln-green/90 text-white border-elbfunkeln-green/80 shadow-lg shadow-elbfunkeln-green/20'
-                  : 'bg-white/50 text-elbfunkeln-green/60 border-white/60 hover:bg-white/70 hover:border-white/80'
+                  ? 'bg-elbfunkeln-green text-white shadow-sm'
+                  : 'text-elbfunkeln-green/50 hover:text-elbfunkeln-green/80'
               }`}
             >
               Alle
@@ -145,10 +145,10 @@ export function GalleryPage() {
                 type="button"
                 key={tag}
                 onClick={() => setActiveTag(tag === activeTag ? '' : tag)}
-                className={`px-5 py-2 rounded-full font-inter text-xs tracking-wide transition-all duration-300 backdrop-blur-xl border ${
+                className={`px-4 py-1.5 rounded-full font-inter text-[11px] font-medium tracking-wider uppercase transition-all duration-300 ${
                   activeTag === tag
-                    ? 'bg-elbfunkeln-green/90 text-white border-elbfunkeln-green/80 shadow-lg shadow-elbfunkeln-green/20'
-                    : 'bg-white/50 text-elbfunkeln-green/60 border-white/60 hover:bg-white/70 hover:border-white/80'
+                    ? 'bg-elbfunkeln-green text-white shadow-sm'
+                    : 'text-elbfunkeln-green/50 hover:text-elbfunkeln-green/80'
                 }`}
               >
                 {tag}
@@ -189,42 +189,38 @@ export function GalleryPage() {
                   }}
                 >
                   {/* Glass card */}
-                  <div className="relative overflow-hidden rounded-2xl bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm hover:shadow-xl hover:bg-white/50 transition-all duration-500">
+                  <div className="overflow-hidden rounded-2xl bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm hover:shadow-xl hover:bg-white/50 transition-all duration-500">
                     {/* Image */}
-                    <div className="aspect-square overflow-hidden">
+                    <div className="relative aspect-square overflow-hidden">
                       <img
                         src={post.imageUrl}
                         alt={post.title}
                         className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
                         loading="lazy"
                       />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-500" />
+
+                      {/* Multi-image indicator */}
+                      {post.images.length > 1 && (
+                        <div className="absolute top-2.5 right-2.5 bg-black/25 backdrop-blur-md rounded-full px-2 py-1 flex items-center gap-0.5">
+                          {post.images.slice(0, 4).map((_, i) => (
+                            <Circle key={i} size={4} fill="white" className="text-white/80" />
+                          ))}
+                        </div>
+                      )}
                     </div>
 
-                    {/* Hover overlay — subtle glass reveal */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                    {/* Title on hover — glass bar at bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out">
-                      <div className="bg-white/70 backdrop-blur-2xl border-t border-white/50 px-3 py-2.5">
-                        <h3 className="font-cormorant text-sm md:text-base text-elbfunkeln-green leading-tight truncate">
-                          {post.title}
-                        </h3>
-                        {post.images.length > 1 && (
-                          <p className="font-inter text-[10px] text-elbfunkeln-green/40 mt-0.5">
-                            {post.images.length} Bilder
-                          </p>
-                        )}
-                      </div>
+                    {/* Title — always visible */}
+                    <div className="px-3 py-2.5">
+                      <h3 className="font-cormorant text-base md:text-lg text-elbfunkeln-green leading-tight truncate">
+                        {post.title}
+                      </h3>
+                      {post.images.length > 1 && (
+                        <p className="font-inter text-[10px] text-elbfunkeln-green/35 mt-0.5">
+                          {post.images.length} Bilder
+                        </p>
+                      )}
                     </div>
-
-                    {/* Multi-image indicator dots */}
-                    {post.images.length > 1 && (
-                      <div className="absolute top-2.5 right-2.5 bg-black/20 backdrop-blur-md rounded-full px-2 py-1 flex items-center gap-0.5">
-                        {post.images.slice(0, 4).map((_, i) => (
-                          <Circle key={i} size={4} fill="white" className="text-white/80" />
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </motion.div>
               </motion.div>
@@ -292,22 +288,22 @@ export function GalleryPage() {
 
             {/* Content area */}
             <div
-              className="relative z-20 w-full max-w-5xl mx-4 md:mx-8 flex flex-col items-center"
+              className="relative z-20 w-full max-w-3xl mx-4 md:mx-8 flex flex-col items-center"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Main image */}
               <motion.div
                 key={`${selectedPost.id}-${lightboxImageIndex}`}
-                initial={{ scale: 0.95, opacity: 0 }}
+                initial={{ scale: 0.96, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
+                exit={{ scale: 0.96, opacity: 0 }}
                 transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
                 className="relative w-full"
               >
                 <img
                   src={selectedImages[lightboxImageIndex]}
                   alt={selectedPost.title}
-                  className="w-full max-h-[65vh] object-contain rounded-2xl"
+                  className="w-full max-h-[50vh] object-contain rounded-2xl"
                 />
 
                 {/* Image nav arrows (within post images) */}
