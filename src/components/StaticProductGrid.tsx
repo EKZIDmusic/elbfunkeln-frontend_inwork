@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ShoppingCart, Heart, Eye, Star } from 'lucide-react';
+import { Eye, Star } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import apiService, { Product as ApiProduct } from '../services/apiService';
-import { useCart, Product as CartProduct } from './CartContext';
+import apiService from '../services/apiService';
 import { useRouter } from './Router';
 import { toast } from 'sonner@2.0.3';
-import { addToFavorites, removeFromFavorites, isFavorite } from '../pages/FavoritesPage';
 
 
 interface StaticProductGridProps {
@@ -34,23 +32,18 @@ interface Product {
   originalPrice?: number;
 }
 
-export function StaticProductGrid({ 
-  categoryId, 
-  limit = 12, 
+export function StaticProductGrid({
+  categoryId,
+  limit = 12,
   showCategory = false,
   title = "Handgefertigter Drahtschmuck"
 }: StaticProductGridProps) {
   const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [favoriteProducts, setFavoriteProducts] = useState<number[]>([]);
-  const { addToCart } = useCart();
   const { navigateTo } = useRouter();
 
   useEffect(() => {
     loadProducts();
-    // Load favorites from localStorage
-    const favorites = JSON.parse(localStorage.getItem('elbfunkeln-favorites') || '[]');
-    setFavoriteProducts(favorites);
   }, [categoryId, limit]);
 
   const loadProducts = async () => {
@@ -91,36 +84,8 @@ export function StaticProductGrid({
     }
   };
 
-  const handleAddToCart = (product: Product) => {
-    const cartItem: CartProduct = {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      quantity: 1
-    };
-    addToCart(cartItem);
-    toast.success(`${product.name} wurde zum Warenkorb hinzugefügt!`);
-  };
-
   const handleViewProduct = (product: Product) => {
     navigateTo('product', { productId: product.id });
-  };
-
-  const handleToggleFavorite = (productId: number, event?: React.MouseEvent) => {
-    if (event) {
-      event.stopPropagation();
-    }
-    if (isFavorite(productId)) {
-      removeFromFavorites(productId);
-      toast.success('Produkt aus Favoriten entfernt!');
-    } else {
-      addToFavorites(productId);
-      toast.success('Produkt zu Favoriten hinzugefügt!');
-    }
-    // Update local state
-    const favorites = JSON.parse(localStorage.getItem('elbfunkeln-favorites') || '[]');
-    setFavoriteProducts(favorites);
   };
 
   const formatPrice = (price: number) => {
@@ -162,7 +127,7 @@ export function StaticProductGrid({
               {title}
             </h2>
             <p className="font-inter text-lg text-elbfunkeln-green/70 max-w-2xl mx-auto">
-              Entdecke unsere exklusive Sammlung handgefertigter Drahtschmuck-Stücke. 
+              Entdecke unsere exklusive Sammlung handgefertigter Drahtschmuck-Stücke.
               Jedes Stück ist ein Unikat, geschaffen mit Liebe zum Detail in Hamburg.
             </p>
           </div>
@@ -175,7 +140,7 @@ export function StaticProductGrid({
               <Card className="group overflow-hidden border-elbfunkeln-lavender/20 shadow-lg hover:shadow-xl transition-all duration-300 bg-white/90 backdrop-blur-sm h-full">
                 <div className="relative overflow-hidden">
                   {/* Product Image */}
-                  <div 
+                  <div
                     className="aspect-square bg-gray-100 cursor-pointer"
                     onClick={() => handleViewProduct(product)}
                   >
@@ -208,32 +173,7 @@ export function StaticProductGrid({
                     )}
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="w-10 h-10 p-0 bg-white/90 hover:bg-white"
-                      onClick={(e) => handleToggleFavorite(Number(product.id), e)}
-                    >
-                      <Heart 
-                        className={`h-4 w-4 ${isFavorite(Number(product.id)) ? 'fill-elbfunkeln-rose text-elbfunkeln-rose' : 'text-gray-600'}`} 
-                      />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="w-10 h-10 p-0 bg-white/90 hover:bg-white"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleViewProduct(product);
-                      }}
-                    >
-                      <Eye className="h-4 w-4 text-gray-600" />
-                    </Button>
-                  </div>
-
-                  {/* Quick Add Overlay */}
+                  {/* Quick View Overlay */}
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                     <Button
                       onClick={(e) => {
@@ -251,13 +191,13 @@ export function StaticProductGrid({
                 <CardContent className="p-6">
                   {/* Product Info */}
                   <div className="space-y-3">
-                    <h3 
+                    <h3
                       className="font-inter text-elbfunkeln-green hover:text-elbfunkeln-rose transition-colors cursor-pointer"
                       onClick={() => handleViewProduct(product)}
                     >
                       {product.name}
                     </h3>
-                    
+
                     {product.description && (
                       <p className="font-inter text-sm text-elbfunkeln-green/70 line-clamp-2">
                         {product.description}
@@ -311,7 +251,7 @@ export function StaticProductGrid({
 
         {/* Empty State */}
         {!loading && displayProducts.length === 0 && (
-          <motion.div 
+          <motion.div
             className="text-center py-16"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -329,7 +269,7 @@ export function StaticProductGrid({
 
         {/* Load More Button */}
         {displayProducts.length >= limit && (
-          <motion.div 
+          <motion.div
             className="text-center mt-12"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

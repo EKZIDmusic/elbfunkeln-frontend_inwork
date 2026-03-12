@@ -75,7 +75,7 @@ export function RegisterPage() {
         
         // Small delay to show success message
         setTimeout(() => {
-          navigateTo('account');
+          navigateTo('home');
         }, 1500);
       } else {
         setError('Registrierung fehlgeschlagen. Möglicherweise existiert bereits ein Konto mit dieser E-Mail-Adresse.');

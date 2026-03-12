@@ -1,20 +1,16 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Heart, ShoppingBag, Share2, Truck, Shield, RotateCcw, Star, Gift } from 'lucide-react';
+import { ArrowLeft, Share2, Star } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Card } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { ProductImageGallery } from '../components/ProductImageGallery';
 import { useRouter } from '../components/Router';
-import { useCart } from '../components/CartContext';
 import apiService, { Product } from '../services/apiService';
 import { toast } from 'sonner';
 
 export function ProductDetailPage() {
   const { productId, navigateTo } = useRouter();
-  const { addToCart, toggleFavorite, isFavorite } = useCart();
-  const [quantity, setQuantity] = useState(1);
-  const [includeGiftBox, setIncludeGiftBox] = useState(false);
 
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
@@ -50,24 +46,6 @@ export function ProductDetailPage() {
       toast.error('Fehler beim Laden des Produkts');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleAddToCart = () => {
-    if (!product) return;
-
-    const primaryImage = product.images.find(img => img.isPrimary);
-    const imageUrl = primaryImage?.url || product.images[0]?.url || '';
-
-    for (let i = 0; i < quantity; i++) {
-      addToCart({
-        id: product.id,
-        productId: product.id,
-        name: product.name,
-        price: product.discountPrice || product.price,
-        image: imageUrl,
-        quantity: 1
-      });
     }
   };
 
@@ -151,7 +129,7 @@ export function ProductDetailPage() {
             <div>
               <p className="text-sm text-elbfunkeln-rose mb-2">{product.category.name}</p>
               <h1 className="font-cormorant mb-2 text-elbfunkeln-green">{product.name}</h1>
-              
+
               {/* Rating */}
               {product.reviews.length > 0 && (
                 <div className="flex items-center gap-2 mb-4">
@@ -209,74 +187,8 @@ export function ProductDetailPage() {
               <p className="text-elbfunkeln-green">{product.description}</p>
             </div>
 
-            {/* Quantity */}
-            <div className="space-y-2">
-              <label className="text-elbfunkeln-green">Menge</label>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="border-elbfunkeln-green"
-                >
-                  -
-                </Button>
-                <span className="px-4 py-2 bg-white rounded-md border border-elbfunkeln-green w-16 text-center">
-                  {quantity}
-                </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                  disabled={quantity >= product.stock}
-                  className="border-elbfunkeln-green"
-                >
-                  +
-                </Button>
-              </div>
-            </div>
-
-            {/* Gift Box Option */}
-            {product.giftboxavailable && (
-              <div className="flex items-center gap-3 p-4 bg-white rounded-lg border border-elbfunkeln-green/20">
-                <input
-                  type="checkbox"
-                  id="giftbox"
-                  checked={includeGiftBox}
-                  onChange={(e) => setIncludeGiftBox(e.target.checked)}
-                  className="w-4 h-4 text-elbfunkeln-rose border-elbfunkeln-green rounded focus:ring-elbfunkeln-rose"
-                />
-                <label htmlFor="giftbox" className="flex items-center gap-2 text-elbfunkeln-green cursor-pointer">
-                  <Gift className="h-5 w-5" />
-                  <span>Als Geschenk mit Geschenkbox verpacken (+5,00 €)</span>
-                </label>
-              </div>
-            )}
-
             {/* Actions */}
             <div className="flex gap-3">
-              <Button
-                className="flex-1 bg-elbfunkeln-green hover:bg-elbfunkeln-rose text-white"
-                onClick={handleAddToCart}
-                disabled={product.stock === 0}
-              >
-                <ShoppingBag className="mr-2 h-5 w-5" />
-                In den Warenkorb
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => toggleFavorite(product.id)}
-                className="border-elbfunkeln-green"
-              >
-                <Heart
-                  className={`h-5 w-5 ${
-                    isFavorite(product.id)
-                      ? 'fill-elbfunkeln-rose text-elbfunkeln-rose'
-                      : 'text-elbfunkeln-green'
-                  }`}
-                />
-              </Button>
               <Button
                 variant="outline"
                 size="icon"
@@ -285,22 +197,6 @@ export function ProductDetailPage() {
               >
                 <Share2 className="h-5 w-5 text-elbfunkeln-green" />
               </Button>
-            </div>
-
-            {/* Features */}
-            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-elbfunkeln-green/20">
-              <div className="text-center">
-                <Truck className="h-6 w-6 mx-auto mb-2 text-elbfunkeln-green" />
-                <p className="text-xs text-elbfunkeln-green">Kostenloser Versand ab 50€</p>
-              </div>
-              <div className="text-center">
-                <Shield className="h-6 w-6 mx-auto mb-2 text-elbfunkeln-green" />
-                <p className="text-xs text-elbfunkeln-green">Sichere Zahlung</p>
-              </div>
-              <div className="text-center">
-                <RotateCcw className="h-6 w-6 mx-auto mb-2 text-elbfunkeln-green" />
-                <p className="text-xs text-elbfunkeln-green">14 Tage Rückgaberecht</p>
-              </div>
             </div>
           </div>
         </div>
@@ -379,7 +275,7 @@ export function ProductDetailPage() {
                   <Card
                     key={relatedProduct.id}
                     className="overflow-hidden bg-white border-elbfunkeln-green/20 hover:shadow-lg transition-all cursor-pointer"
-                    onClick={() => navigateTo('product', relatedProduct.id)}
+                    onClick={() => navigateTo('product', { productId: relatedProduct.id })}
                   >
                     <div className="aspect-square relative">
                       <img

@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Grid, List, Heart, ShoppingBag, Eye } from 'lucide-react';
+import { Grid, List, Eye } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useRouter } from '../components/Router';
-import { useCart } from '../components/CartContext';
 import apiService, { Product, Category } from '../services/apiService';
 import { toast } from 'sonner@2.0.3';
 
@@ -21,9 +20,8 @@ export function ShopPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const { navigateTo, category } = useRouter();
-  const { addToCart, toggleFavorite, isFavorite } = useCart();
 
   useEffect(() => {
     loadData();
@@ -47,10 +45,10 @@ export function ShopPage() {
         apiService.products.getAll({ limit: 100 }),
         apiService.categories.getAll()
       ]);
-      
+
       setProducts(productsResponse.data);
       setCategories(categoriesResponse);
-      
+
       console.log('📦 Loaded products:', productsResponse.data.length);
       console.log('📂 Loaded categories:', categoriesResponse.length);
     } catch (error) {
@@ -104,24 +102,11 @@ export function ShopPage() {
   const displayedProducts = filteredAndSortedProducts();
 
   const getPrimaryImage = (product: Product): string => {
-    console.log({product})
     if (!product.images || product.images.length === 0) {
       return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSq7L1tIPk7QMbHVjV1ixR_Oo4IgaZLE-CUyQ&s';
     }
     const primaryImage = product.images.find(img => img.isPrimary);
     return primaryImage?.url || product.images[0]?.url || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSq7L1tIPk7QMbHVjV1ixR_Oo4IgaZLE-CUyQ&s';
-  };
-
-  const handleAddToCart = (product: Product) => {
-    const primaryImage = getPrimaryImage(product);
-    addToCart({
-      id: product.id,
-      productId: product.id,
-      name: product.name,
-      price: product.discountPrice || product.price,
-      image: primaryImage,
-      quantity: 1
-    });
   };
 
   if (loading) {
@@ -262,14 +247,6 @@ export function ShopPage() {
                         Featured
                       </Badge>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-2 right-2 bg-white/80 hover:bg-white"
-                      onClick={() => toggleFavorite(product.id)}
-                    >
-                      <Heart className={`h-5 w-5 ${isFavorite(product.id) ? 'fill-elbfunkeln-rose text-elbfunkeln-rose' : 'text-elbfunkeln-green'}`} />
-                    </Button>
                   </div>
                   <div className={`p-4 ${viewMode === 'list' ? 'flex-1 flex flex-col justify-between' : ''}`}>
                     <div>
@@ -292,26 +269,15 @@ export function ShopPage() {
                         <p className="text-sm text-elbfunkeln-rose mb-2">Ausverkauft</p>
                       )}
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigateTo('product', product.id)}
-                        className="flex-1 border-elbfunkeln-green text-elbfunkeln-green hover:bg-elbfunkeln-green hover:text-white"
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        Ansehen
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleAddToCart(product)}
-                        disabled={product.stock === 0}
-                        className="flex-1 bg-elbfunkeln-green hover:bg-elbfunkeln-rose text-white"
-                      >
-                        <ShoppingBag className="h-4 w-4 mr-2" />
-                        In den Warenkorb
-                      </Button>
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigateTo('product', { productId: product.id })}
+                      className="w-full border-elbfunkeln-green text-elbfunkeln-green hover:bg-elbfunkeln-green hover:text-white"
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Ansehen
+                    </Button>
                   </div>
                 </Card>
               </motion.div>

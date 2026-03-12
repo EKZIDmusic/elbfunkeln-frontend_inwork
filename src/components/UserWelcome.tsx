@@ -52,7 +52,7 @@ export function UserWelcome() {
                     Neue Kollektionen entdecken
                   </Button>
                   <Button
-                    onClick={() => navigateTo('account')}
+                    onClick={() => navigateTo('home')}
                     variant="outline"
                     className="border-elbfunkeln-lavender text-elbfunkeln-green hover:bg-elbfunkeln-lavender hover:text-white px-6"
                   >

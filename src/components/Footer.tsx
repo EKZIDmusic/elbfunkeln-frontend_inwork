@@ -20,10 +20,9 @@ const footerLinks = {
     { name: 'Sale', category: 'sale' }
   ],
   service: [
+    { name: 'Galerie', page: 'gallery' },
     { name: 'Über uns', page: 'about' },
     { name: 'Kontakt', page: 'contact' },
-    { name: 'Versand', page: 'shipping' },
-    { name: 'Rückgabe', page: 'returns' },
     { name: 'Größenberatung', page: 'size-guide' },
     { name: 'Pflege-Tipps', page: 'care-tips' }
   ],

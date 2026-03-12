@@ -100,12 +100,6 @@ const transformProduct = (product: any): Product => ({
   updated_at: product.updatedAt || product.updated_at,
 });
 
-const transformOrderItem = (item: any): OrderItem => ({
-  ...item,
-  price: Number(item.price),
-  product: item.product ? transformProduct(item.product) : item.product,
-});
-
 // ============================================================================
 // AUTHENTICATION
 // ============================================================================
@@ -145,13 +139,13 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  
+
   login: (data: LoginData) =>
     apiCall<AuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  
+
   getProfile: () =>
     apiCall<UserProfile>('/auth/profile', {}, true),
 };
@@ -274,224 +268,9 @@ export const productsApi = {
 export const categoriesApi = {
   getAll: () =>
     apiCall<Category[]>('/categories'),
-  
+
   getById: (id: string) =>
     apiCall<Category>(`/categories/${id}`),
-};
-
-// ============================================================================
-// CART
-// ============================================================================
-
-export interface CartItem {
-  id: string;
-  productId: string;
-  quantity: number;
-  product: Product;
-  createdAt: string;
-}
-
-export interface Cart {
-  id: string;
-  userId: string;
-  items: CartItem[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AddToCartData {
-  productId: string;
-  quantity: number;
-}
-
-export interface UpdateCartItemData {
-  quantity: number;
-}
-
-export const cartApi = {
-  get: async () => {
-    const cart = await apiCall<Cart>('/cart', {}, true);
-    return {
-      ...cart,
-      items: cart.items.map(item => ({
-        ...item,
-        product: transformProduct(item.product),
-      })),
-    };
-  },
-
-  addItem: async (data: AddToCartData) => {
-    const item = await apiCall<CartItem>('/cart/items', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }, true);
-    return {
-      ...item,
-      product: transformProduct(item.product),
-    };
-  },
-
-  updateItem: async (itemId: string, data: UpdateCartItemData) => {
-    const item = await apiCall<CartItem>(`/cart/items/${itemId}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }, true);
-    return {
-      ...item,
-      product: transformProduct(item.product),
-    };
-  },
-
-  removeItem: (itemId: string) =>
-    apiCall<{ message: string }>(`/cart/items/${itemId}`, {
-      method: 'DELETE',
-    }, true),
-
-  clear: () =>
-    apiCall<{ message: string }>('/cart', {
-      method: 'DELETE',
-    }, true),
-};
-
-// ============================================================================
-// ORDERS
-// ============================================================================
-
-export type OrderStatus = 'PENDING' | 'PAID' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
-export type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
-export type ShippingStatus = 'PENDING' | 'LABEL_CREATED' | 'PICKED_UP' | 'IN_TRANSIT' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'FAILED';
-
-export interface OrderItem {
-  id: string;
-  productId: string;
-  quantity: number;
-  price: number;
-  product: Product;
-}
-
-export interface Order {
-  id: string;
-  orderNumber: string;
-  userId: string;
-  addressId: string;
-  status: OrderStatus;
-  paymentStatus: PaymentStatus;
-  shippingStatus: ShippingStatus;
-  subtotal: number;
-  tax: number;
-  shipping: number;
-  discount: number;
-  total: number;
-  notes?: string | null;
-  trackingNumber?: string | null;
-  stripePaymentId?: string | null;
-  discountCode?: string | null;
-  items: OrderItem[];
-  address: any;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateOrderData {
-  addressId: string;
-  items: Array<{
-    productId: string;
-    quantity: number;
-  }>;
-  notes?: string;
-}
-
-export const ordersApi = {
-  create: async (data: CreateOrderData) => {
-    const order = await apiCall<Order>('/orders', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }, true);
-    return {
-      ...order,
-      items: order.items.map(transformOrderItem),
-    };
-  },
-
-  getAll: async () => {
-    const orders = await apiCall<Order[]>('/orders', {}, true);
-    return orders.map(order => ({
-      ...order,
-      items: order.items.map(transformOrderItem),
-    }));
-  },
-
-  getById: async (id: string) => {
-    const order = await apiCall<Order>(`/orders/${id}`, {}, true);
-    return {
-      ...order,
-      items: order.items.map(transformOrderItem),
-    };
-  },
-
-  cancel: async (id: string) => {
-    const order = await apiCall<Order>(`/orders/${id}/cancel`, {
-      method: 'PUT',
-    }, true);
-    return {
-      ...order,
-      items: order.items.map(transformOrderItem),
-    };
-  },
-};
-
-// ============================================================================
-// PAYMENTS
-// ============================================================================
-
-export interface CreatePaymentData {
-  orderId: string;
-  amount: number;
-  method: string;
-}
-
-export interface PaymentIntentResponse {
-  order: Order;
-  clientSecret: string;
-  paymentIntentId: string;
-}
-
-export const paymentsApi = {
-  createPaymentIntent: (data: CreatePaymentData) =>
-    apiCall<PaymentIntentResponse>('/payments', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }, true),
-};
-
-// ============================================================================
-// SHIPPING
-// ============================================================================
-
-export interface ShippingRate {
-  id: string;
-  name: string;
-  price: number;
-  estimatedDays: string;
-}
-
-export interface CreateShippingLabelData {
-  orderId: string;
-  carrier: string;
-}
-
-export const shippingApi = {
-  getRates: (addressId: string, weight?: number) =>
-    apiCall<ShippingRate[]>(`/shipping/rates?addressId=${addressId}${weight ? `&weight=${weight}` : ''}`, {}, true),
-
-  createLabel: (data: CreateShippingLabelData) =>
-    apiCall<{ trackingNumber: string; labelUrl: string; message: string }>('/shipping/label', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }, true),
-
-  trackShipment: (trackingNumber: string) =>
-    apiCall<{ status: string; events: any[]; estimatedDelivery?: string }>(`/shipping/track/${trackingNumber}`, {}, true),
 };
 
 // ============================================================================
@@ -518,47 +297,6 @@ export const analyticsApi = {
     const query = params.toString();
     return apiCall<AnalyticsStats>(`/analytics/stats${query ? `?${query}` : ''}`, {}, true);
   },
-};
-
-// ============================================================================
-// GIFT CARDS
-// ============================================================================
-
-export interface GiftCard {
-  id: string;
-  code: string;
-  amount: number;
-  balance: number;
-  isActive: boolean;
-  expiresAt?: string | null;
-  createdAt: string;
-}
-
-export interface GiftCardBalance {
-  code: string;
-  balance: number;
-  isActive: boolean;
-  expiresAt: string | null;
-}
-
-export interface RedeemGiftCardData {
-  code: string;
-  orderId: string;
-  amount: number;
-}
-
-export const giftCardsApi = {
-  getByCode: (code: string) =>
-    apiCall<GiftCard>(`/gift-cards/${code}`),
-
-  getBalance: (code: string) =>
-    apiCall<GiftCardBalance>(`/gift-cards/balance/${code}`),
-
-  redeem: (data: RedeemGiftCardData) =>
-    apiCall<{ success: boolean; remainingBalance: number; message: string }>('/gift-cards/redeem', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }, true),
 };
 
 // ============================================================================
@@ -612,97 +350,6 @@ export const newsletterApi = {
 };
 
 // ============================================================================
-// ADDRESSES
-// ============================================================================
-
-export interface Address {
-  id: string;
-  userId: string;
-  firstName: string;
-  lastName: string;
-  street: string;
-  houseNumber: string;
-  city: string;
-  postalCode: string;
-  country: string;
-  isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateAddressData {
-  firstName: string;
-  lastName: string;
-  street: string;
-  houseNumber: string;
-  city: string;
-  postalCode: string;
-  country: string;
-  isDefault?: boolean;
-}
-
-export const addressesApi = {
-  getAll: () =>
-    apiCall<Address[]>('/addresses', {}, true),
-
-  getById: (id: string) =>
-    apiCall<Address>(`/addresses/${id}`, {}, true),
-
-  create: (data: CreateAddressData) =>
-    apiCall<Address>('/addresses', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }, true),
-
-  update: (id: string, data: Partial<CreateAddressData>) =>
-    apiCall<Address>(`/addresses/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }, true),
-
-  delete: (id: string) =>
-    apiCall<{ message: string }>(`/addresses/${id}`, {
-      method: 'DELETE',
-    }, true),
-
-  setDefault: (id: string) =>
-    apiCall<Address>(`/addresses/${id}/default`, {
-      method: 'PUT',
-    }, true),
-};
-
-// ============================================================================
-// FAVORITES
-// ============================================================================
-
-export interface Favorite {
-  id: string;
-  userId: string;
-  productId: string;
-  product: Product;
-  createdAt: string;
-}
-
-export const favoritesApi = {
-  getAll: () =>
-    apiCall<Favorite[]>('/favorites', {}, true),
-
-  add: (productId: string) =>
-    apiCall<Favorite>('/favorites', {
-      method: 'POST',
-      body: JSON.stringify({ productId }),
-    }, true),
-
-  remove: (productId: string) =>
-    apiCall<{ message: string }>(`/favorites/${productId}`, {
-      method: 'DELETE',
-    }, true),
-
-  check: (productId: string) =>
-    apiCall<{ isFavorite: boolean }>(`/favorites/check/${productId}`, {}, true),
-};
-
-// ============================================================================
 // REVIEWS
 // ============================================================================
 
@@ -742,58 +389,6 @@ export const reviewsApi = {
   delete: (id: string) =>
     apiCall<{ message: string }>(`/reviews/${id}`, {
       method: 'DELETE',
-    }, true),
-};
-
-// ============================================================================
-// DISCOUNTS
-// ============================================================================
-
-export interface Discount {
-  id: string;
-  code: string;
-  type: 'PERCENTAGE' | 'FIXED';
-  value: number;
-  minOrderValue: number | null;
-  maxUses: number | null;
-  usedCount: number;
-  isActive: boolean;
-  expiresAt: string | null;
-  createdAt: string;
-}
-
-export interface ValidateDiscountData {
-  code: string;
-  orderTotal: number;
-  userId?: string;
-}
-
-export interface ApplyDiscountData {
-  code: string;
-  orderId: string;
-}
-
-export interface ValidateDiscountResponse {
-  isValid: boolean;
-  discount?: Discount;
-  savings?: number;
-  error?: string;
-}
-
-export const discountsApi = {
-  getByCode: (code: string) =>
-    apiCall<Discount>(`/discounts/${code}`),
-
-  validate: (data: ValidateDiscountData) =>
-    apiCall<ValidateDiscountResponse>('/discounts/validate', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-
-  apply: (data: ApplyDiscountData) =>
-    apiCall<{ success: boolean; discount: number; finalTotal: number; message: string }>('/discounts/apply', {
-      method: 'POST',
-      body: JSON.stringify(data),
     }, true),
 };
 
@@ -1121,17 +716,9 @@ export default {
   auth: authApi,
   products: productsApi,
   categories: categoriesApi,
-  cart: cartApi,
-  orders: ordersApi,
-  payments: paymentsApi,
-  shipping: shippingApi,
   analytics: analyticsApi,
-  giftCards: giftCardsApi,
   newsletter: newsletterApi,
-  addresses: addressesApi,
-  favorites: favoritesApi,
   reviews: reviewsApi,
-  discounts: discountsApi,
   tickets: ticketsApi,
   contact: contactApi,
   admin: {

@@ -29,29 +29,9 @@ export function LoginPage() {
       if (success) {
         setError('✅ Anmeldung erfolgreich! Du wirst weitergeleitet...');
 
-        // Small delay to show success message, then redirect based on user role
+        // Small delay to show success message, then redirect
         setTimeout(() => {
-          // Get user from localStorage (user state might not be updated yet)
-          const storedUser = localStorage.getItem('elbfunkeln_user');
-          if (storedUser) {
-            try {
-              const userData = JSON.parse(storedUser);
-
-              // Redirect based on user role from API
-              if (userData.role === 'ADMIN') {
-                navigateTo('admin-dashboard');
-              } else if (userData.role === 'SHOP_OWNER') {
-                navigateTo('admin');
-              } else {
-                navigateTo('account');
-              }
-            } catch (parseError) {
-              console.error('Error parsing user data:', parseError);
-              navigateTo('account'); // Default fallback
-            }
-          } else {
-            navigateTo('account'); // Default fallback
-          }
+          navigateTo('home');
         }, 1000);
       } else {
         setError('❌ Ungültige Anmeldedaten. Bitte versuche es erneut.');

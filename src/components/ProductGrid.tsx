@@ -1,18 +1,16 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Heart, ShoppingBag, Eye } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { useRouter } from './Router';
-import { useCart } from './CartContext';
 import apiService, { Product } from '../services/apiService';
 
 export function ProductGrid() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const { navigateTo } = useRouter();
-  const { addToCart, toggleFavorite, isFavorite } = useCart();
 
   useEffect(() => {
     loadProducts();
@@ -30,27 +28,11 @@ export function ProductGrid() {
   };
 
   const getPrimaryImage = (product: Product): string => {
-    console.log("getPrimaryImage")
-    console.log({product});
     if (!product.images || product.images.length === 0) {
-      // hier muss die richtige URL für das Platzhalterbild eingefügt werden
       return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSq7L1tIPk7QMbHVjV1ixR_Oo4IgaZLE-CUyQ&s';
     }
     const primaryImage = product.images.find(img => img.isPrimary);
-    // hier muss die richtige URL für das Platzhalterbild eingefügt werden
     return primaryImage?.url || product.images[0]?.url || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSq7L1tIPk7QMbHVjV1ixR_Oo4IgaZLE-CUyQ&s';
-  };
-
-  const handleAddToCart = (product: Product) => {
-    const primaryImage = getPrimaryImage(product);
-    addToCart({
-      id: product.id,
-      productId: product.id,
-      name: product.name,
-      price: product.discountPrice || product.price,
-      image: primaryImage,
-      quantity: 1
-    });
   };
 
   if (loading) {
@@ -106,14 +88,6 @@ export function ProductGrid() {
                       Featured
                     </Badge>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2 bg-white/80 hover:bg-white"
-                    onClick={() => toggleFavorite(product.id)}
-                  >
-                    <Heart className={`h-5 w-5 ${isFavorite(product.id) ? 'fill-elbfunkeln-rose text-elbfunkeln-rose' : 'text-elbfunkeln-green'}`} />
-                  </Button>
                 </div>
                 <div className="p-4">
                   <p className="text-sm text-elbfunkeln-rose mb-1">{product.category.name}</p>
@@ -128,26 +102,15 @@ export function ProductGrid() {
                       <span className="text-elbfunkeln-green">{product.price.toFixed(2)} €</span>
                     )}
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigateTo('product', product.id)}
-                      className="flex-1 border-elbfunkeln-green text-elbfunkeln-green hover:bg-elbfunkeln-green hover:text-white"
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Ansehen
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => handleAddToCart(product)}
-                      disabled={product.stock === 0}
-                      className="flex-1 bg-elbfunkeln-green hover:bg-elbfunkeln-rose text-white"
-                    >
-                      <ShoppingBag className="h-4 w-4 mr-2" />
-                      In den Warenkorb
-                    </Button>
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigateTo('product', { productId: product.id })}
+                    className="w-full border-elbfunkeln-green text-elbfunkeln-green hover:bg-elbfunkeln-green hover:text-white"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    Ansehen
+                  </Button>
                 </div>
               </Card>
             </motion.div>
