@@ -31,7 +31,7 @@ import { Toaster } from './components/ui/sonner';
 
 function AppContent() {
   const { currentPage } = useRouter();
-  const { isLoggedIn, isShopOwner, isAdmin } = useAuth();
+  const { isLoggedIn } = useAuth();
 
   const renderPage = () => {
     switch (currentPage) {
@@ -48,7 +48,7 @@ function AppContent() {
       case 'gallery':
         return <GalleryPage />;
       case 'gallery-upload':
-        return (isLoggedIn() && (isShopOwner() || isAdmin())) ? <GalleryUploadPage /> : <LoginPage />;
+        return isLoggedIn() ? <GalleryUploadPage /> : <LoginPage />;
       case 'login':
         return <LoginPage />;
       case 'register':
