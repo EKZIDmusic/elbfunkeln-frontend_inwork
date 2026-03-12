@@ -102,7 +102,7 @@ export function GalleryPage() {
 
   if (posts.length === 0) {
     return (
-      <div className="min-h-screen bg-elbfunkeln-beige pt-36 pb-16">
+      <div className="min-h-screen bg-elbfunkeln-beige pt-44 pb-16">
         <div className="container mx-auto px-4 text-center pt-20">
           <h1 className="font-cormorant text-4xl md:text-5xl text-elbfunkeln-green mb-4">Galerie</h1>
           <p className="font-inter text-lg text-elbfunkeln-green/60">Bald findest du hier Einblicke in unsere Welt.</p>
@@ -112,7 +112,7 @@ export function GalleryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-elbfunkeln-beige pt-36 pb-20">
+    <div className="min-h-screen bg-elbfunkeln-beige pt-44 pb-20">
       <div className="container mx-auto px-4 max-w-6xl">
         {/* Header */}
         <motion.div
@@ -222,9 +222,20 @@ export function GalleryPage() {
       {/* ═══ LIGHTBOX ═══ */}
       {selectedPost && selectedPostIndex !== null && (
         <div className="lightbox-overlay" onClick={closeLightbox}>
-          {/* Centered content */}
-          <div className="lightbox-center" onClick={(e) => e.stopPropagation()}>
-            <div className="lightbox-card">
+          <div className="lightbox-center">
+            <div className="lightbox-card" onClick={(e) => e.stopPropagation()}>
+
+              {/* Close button — inside card, top right */}
+              <div className="lightbox-close-row">
+                <button
+                  type="button"
+                  onClick={closeLightbox}
+                  title="Schließen"
+                  className="lightbox-close-btn"
+                >
+                  <X size={16} />
+                </button>
+              </div>
 
               {/* Image */}
               <div className="lightbox-image-wrap">
@@ -238,7 +249,7 @@ export function GalleryPage() {
                 {selectedImages.length > 1 && lightboxImageIndex > 0 && (
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); setLightboxImageIndex(prev => prev - 1); }}
+                    onClick={() => setLightboxImageIndex(prev => prev - 1)}
                     title="Vorheriges Bild"
                     className="lightbox-img-btn lightbox-img-btn--left"
                   >
@@ -250,7 +261,7 @@ export function GalleryPage() {
                 {selectedImages.length > 1 && lightboxImageIndex < selectedImages.length - 1 && (
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); setLightboxImageIndex(prev => prev + 1); }}
+                    onClick={() => setLightboxImageIndex(prev => prev + 1)}
                     title="Nächstes Bild"
                     className="lightbox-img-btn lightbox-img-btn--right"
                   >
@@ -266,7 +277,7 @@ export function GalleryPage() {
                     <button
                       type="button"
                       key={i}
-                      onClick={(e) => { e.stopPropagation(); setLightboxImageIndex(i); }}
+                      onClick={() => setLightboxImageIndex(i)}
                       title={`Bild ${i + 1}`}
                       className={`lightbox-dot ${i === lightboxImageIndex ? 'lightbox-dot--active' : ''}`}
                     />
@@ -302,10 +313,33 @@ export function GalleryPage() {
                   </div>
                 )}
 
+                {/* Footer with counter + post navigation */}
                 <div className="lightbox-info-footer">
-                  <span className="font-inter lightbox-info-counter">
-                    {selectedPostIndex + 1} / {filteredPosts.length}
-                  </span>
+                  <div className="lightbox-post-nav">
+                    {selectedPostIndex > 0 ? (
+                      <button
+                        type="button"
+                        onClick={goToPrevPost}
+                        title="Vorheriger Beitrag"
+                        className="lightbox-post-nav-btn"
+                      >
+                        <ChevronLeft size={14} />
+                      </button>
+                    ) : <span />}
+                    <span className="font-inter lightbox-info-counter">
+                      {selectedPostIndex + 1} / {filteredPosts.length}
+                    </span>
+                    {selectedPostIndex < filteredPosts.length - 1 ? (
+                      <button
+                        type="button"
+                        onClick={goToNextPost}
+                        title="Nächster Beitrag"
+                        className="lightbox-post-nav-btn"
+                      >
+                        <ChevronRight size={14} />
+                      </button>
+                    ) : <span />}
+                  </div>
                   {selectedImages.length > 1 && (
                     <span className="font-inter lightbox-info-counter">
                       Bild {lightboxImageIndex + 1} von {selectedImages.length}
@@ -315,40 +349,6 @@ export function GalleryPage() {
               </div>
             </div>
           </div>
-
-          {/* Close button */}
-          <button
-            type="button"
-            onClick={closeLightbox}
-            title="Schließen"
-            className="lightbox-nav-btn lightbox-close-btn"
-          >
-            <X size={16} />
-          </button>
-
-          {/* Prev post */}
-          {selectedPostIndex > 0 && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); goToPrevPost(); }}
-              title="Vorheriger Beitrag"
-              className="lightbox-nav-btn lightbox-prev-btn"
-            >
-              <ChevronLeft size={20} />
-            </button>
-          )}
-
-          {/* Next post */}
-          {selectedPostIndex < filteredPosts.length - 1 && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); goToNextPost(); }}
-              title="Nächster Beitrag"
-              className="lightbox-nav-btn lightbox-next-btn"
-            >
-              <ChevronRight size={20} />
-            </button>
-          )}
         </div>
       )}
     </div>
