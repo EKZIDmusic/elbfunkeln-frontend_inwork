@@ -14,12 +14,14 @@ export interface GalleryPost {
 export type GalleryImage = GalleryPost;
 
 const STORAGE_KEY = 'elbfunkeln_gallery';
+const MOCK_VERSION_KEY = 'elbfunkeln_gallery_v';
+const CURRENT_MOCK_VERSION = 3;
 
-// ── Placeholder images (royalty-free via picsum) ──
+// ── Placeholder images (reliable Unsplash photos) ──
 const MOCK_POSTS: GalleryPost[] = [
   {
     id: 'mock-1',
-    imageUrl: 'https://images.unsplash.com/photo-1515562141589-67f0d569b6fc?w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=900&q=80',
     title: 'Goldene Wellen',
     description: 'Filigrane Drahtarbeit inspiriert von der Bewegung der Elbe bei Sonnenuntergang. Jeder Bogen erzählt von fließendem Wasser und goldenem Licht.',
     tags: ['Kollektion', 'Gold', 'Neuheit'],
@@ -30,7 +32,7 @@ const MOCK_POSTS: GalleryPost[] = [
   },
   {
     id: 'mock-2',
-    imageUrl: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=900&q=80',
     title: 'Werkstatt-Einblick',
     description: 'Ein Blick hinter die Kulissen — so entsteht jedes Stück von Hand in unserer kleinen Hamburger Werkstatt.',
     tags: ['Behind the Scenes', 'Handarbeit'],
@@ -41,7 +43,7 @@ const MOCK_POSTS: GalleryPost[] = [
   },
   {
     id: 'mock-3',
-    imageUrl: 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=900&q=80',
     title: 'Perlentraum in Rosé',
     description: 'Zarte Süßwasserperlen, eingebettet in handgebogenen Silberdraht. Ein Traum für romantische Anlässe.',
     tags: ['Perlen', 'Silber', 'Romantik'],
@@ -52,7 +54,7 @@ const MOCK_POSTS: GalleryPost[] = [
   },
   {
     id: 'mock-4',
-    imageUrl: 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=900&q=80',
     title: 'Frühlings-Kollektion 2026',
     description: 'Unsere neue Kollektion feiert die ersten warmen Tage — leichte Formen, pastellige Töne und die Freude am Neuanfang.',
     tags: ['Kollektion', 'Frühling', 'Neuheit'],
@@ -63,7 +65,7 @@ const MOCK_POSTS: GalleryPost[] = [
   },
   {
     id: 'mock-5',
-    imageUrl: 'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=900&q=80',
     title: 'Materialien',
     description: 'Wir arbeiten ausschließlich mit hochwertigen Materialien — hier ein Blick auf unsere Draht- und Perlenauswahl.',
     tags: ['Behind the Scenes', 'Material'],
@@ -74,7 +76,7 @@ const MOCK_POSTS: GalleryPost[] = [
   },
   {
     id: 'mock-6',
-    imageUrl: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=900&q=80',
     title: 'Kundinnen-Moment',
     description: 'Nichts macht uns glücklicher als strahlende Gesichter. Danke für dieses wunderschöne Foto!',
     tags: ['Community', 'Kundenfoto'],
@@ -85,7 +87,7 @@ const MOCK_POSTS: GalleryPost[] = [
   },
   {
     id: 'mock-7',
-    imageUrl: 'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=900&q=80',
     title: 'Silberne Eleganz',
     description: 'Minimalismus trifft Handwerkskunst — unser meistverkaufter Ring in Sterlingsilber.',
     tags: ['Silber', 'Ring', 'Bestseller'],
@@ -96,7 +98,7 @@ const MOCK_POSTS: GalleryPost[] = [
   },
   {
     id: 'mock-8',
-    imageUrl: 'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=900&q=80',
     title: 'Hamburg, unsere Heimat',
     description: 'Der Hafen, die Elbe, das Licht — Hamburg inspiriert jeden einzelnen unserer Entwürfe.',
     tags: ['Hamburg', 'Inspiration'],
@@ -107,7 +109,7 @@ const MOCK_POSTS: GalleryPost[] = [
   },
   {
     id: 'mock-9',
-    imageUrl: 'https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?w=900&q=80',
     title: 'Geschenkideen',
     description: 'Auf der Suche nach dem perfekten Geschenk? Unsere handgefertigten Sets kommen in einer liebevoll gestalteten Box.',
     tags: ['Geschenk', 'Set', 'Verpackung'],
@@ -118,7 +120,7 @@ const MOCK_POSTS: GalleryPost[] = [
   },
   {
     id: 'mock-10',
-    imageUrl: 'https://images.unsplash.com/photo-1610694955371-d4a3e0ce4b52?w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1610694955371-d4a3e0ce4b52?w=900&q=80',
     title: 'Detailaufnahme: Ohrringe "Elbufer"',
     description: 'Die feinen Drahtschlaufen unserer Ohrringe "Elbufer" — jedes Paar ist ein Unikat mit eigenem Charakter.',
     tags: ['Ohrringe', 'Detail', 'Unikat'],
@@ -131,10 +133,12 @@ const MOCK_POSTS: GalleryPost[] = [
 
 function loadPosts(): GalleryPost[] {
   try {
+    const version = Number(localStorage.getItem(MOCK_VERSION_KEY) || '0');
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) {
-      // Seed with mock data on first load
+    if (!stored || version < CURRENT_MOCK_VERSION) {
+      // Seed / re-seed with updated mock data
       savePosts(MOCK_POSTS);
+      localStorage.setItem(MOCK_VERSION_KEY, String(CURRENT_MOCK_VERSION));
       return [...MOCK_POSTS];
     }
     const posts: GalleryPost[] = JSON.parse(stored);
